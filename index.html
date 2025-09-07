@@ -789,18 +789,50 @@
             }
 
             const correctionMinutes = timeToMinutes(correctionTime);
+            if (correctionMinutes === null) {
+                showMessage('有効な時刻を入力してください', 'error');
+                return;
+            }
+
             let changedCount = 0;
+            let eligibleRows = 0;
 
             // Apply correction to current period data
-            allPeriodData.forEach(row => {
-                if (row.workType !== '休日' && row.workType !== '' && row.startTime && row.startTime !== '---') {
+            allPeriodData.forEach((row, index) => {
+                // More inclusive condition checking
+                if (row.startTime && row.startTime.trim() !== '' && row.startTime !== '---') {
+                    eligibleRows++;
+                    
                     const startMinutes = timeToMinutes(row.startTime);
                     if (startMinutes !== null && startMinutes > correctionMinutes) {
+                        const oldTime = row.startTime;
                         row.startTime = correctionTime;
                         changedCount++;
                         
+                        console.log(`Changed row ${index}: ${oldTime} → ${correctionTime}`);
+                        
                         // Also update original CSV data if it exists
-                        const originalIndex = originalCsvData.findIndex(orig => orig.date === row.date);
+                        const normalizeDate = (dateStr) => {
+                            if (!dateStr) return '';
+                            
+                            // Handle different date formats and normalize to YYYY-MM-DD
+                            if (dateStr.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                                const parts = dateStr.split('/');
+                                return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                            } else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                                const parts = dateStr.split('/');
+                                return parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+                            } else if (dateStr.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                                const parts = dateStr.split('-');
+                                return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                            }
+                            return dateStr;
+                        };
+                        
+                        const originalIndex = originalCsvData.findIndex(orig => 
+                            normalizeDate(orig.date) === normalizeDate(row.date)
+                        );
+                        
                         if (originalIndex !== -1) {
                             originalCsvData[originalIndex].startTime = correctionTime;
                         }
@@ -808,12 +840,22 @@
                 }
             });
 
+            console.log(`Eligible rows: ${eligibleRows}, Changed: ${changedCount}`);
+
             if (changedCount > 0) {
+                // Update csvData to maintain consistency
                 csvData = [...allPeriodData];
+                
+                // Trigger recalculation
                 processData();
+                
                 showMessage(`${changedCount}件の出勤時間を${correctionTime}に変更しました`, 'success');
             } else {
-                showMessage('変更対象の出勤時間がありませんでした', 'error');
+                if (eligibleRows === 0) {
+                    showMessage('出勤時間が入力されているデータがありません', 'error');
+                } else {
+                    showMessage(`基準時刻${correctionTime}より遅い出勤時間がありませんでした`, 'error');
+                }
             }
         }
 
@@ -1453,9 +1495,9 @@
 </html>
     <script id="html_badge_script1">
         window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDkQQjRr%2FJlr9BYojbIo%2FxVBDyA9BtfEWJPDyXbay0%2Bu%2BrMpFzEeJcCN48oX9Cc2V6AmmvxGqX5PWGR6MBqjc8gg4breXp62gnhZxxxh8fZ%2B%2FN9PX8MHuao8KQm5n7%2FPc2a9O2pL34%2FOqNNaOvi6irWSiErA%2B%2FIA66nssp8vpUUweDrs8V72SmbAQHKuSUfj%2FE2LGijZ2QJLkQ3QWmGNzJ7RxOUzapZ5FvceNEWONem0ce5eMTriJov3hh0YYm%2FsnB6NkGvWXt4%2F2r1wjP5LBVZOJPE1UXL2Ki5E77QX8rksmLKuQFKih4SSLSdaMzsvdC3WSJsvzZSuZHIZq8ddzODxIB3RP2ydHwMw2ppQGw8%2B%2BQDYgDgMZBCIYh9h7JiUtvYG5Gdlu21il2EzDjndtEBTnpm2GWEbngGNGFAoWaQdWn%2BhnQ1PjEhxxATEforVfGZsUxq%2FLvGRHjJXBrbC%2BnWnGi5qvUry83WQ19vPfGf64N%2Bh6zfXVJbh7tDu8kEMw0SRu10xw%2BtVPx3SUVT7WzDg%3D";
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDu5msvlegH4cSVL1oRGe2PLDSSLIC83BERdg7lZi7ZKKwDtDmEV1QxFoJyvVv8qyoaFip8cwkMOLnHLQ9WBjUoIPdMc%2FDEkLrb1zar0TC9gj8v9k0wGwI5R%2B6XTD4K5Q2LQlv7oOHqPjcKZvBREX4BFy2gcsYjx2dllr6KILmOtxPbgLiobX9gdfNU7WZx5vjncnS5Rl9yfTuLai%2F2Zq7xqPAgBfU8fqBN4MUAi1i%2BpK1JE0ykTeBr26E9TPfHaAlIhSiyJDJFkGDinqeryvJzQs5TFsHY5AeLPtgswFhLZG1GI%2FQoumXFpQYuagGF8i%2BsvGZNyA%2FiQZyQUKDBJI9g5BCeFqzh8oJFiL4PFRw5n6WFi9MdIdyz3lCTvEnO0a9LLzlY7c4h7QItIKk%2Fa18VI7DAbFJ%2BhJWy3DMXxCJ8iiLyo5Iv8CKHVvNZH%2B8U%2BgWfcjBU3LwPK8vey58WjefV3hK9JpCC06vOUGrJkxUIHQjTBWKrhNgDrGERrU19Bh0argdjcWa%2BnznKgePy4zu0s%3D";
         window.__genspark_locale = "ja-JP";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDkQQjRr/Jlr9BYojbIo/xVBDyA9BtfEWJPDyXbay0+u+rMpFzEeJcCN48oX9Cc2V6AmmvxGqX5PWGR6MBqjc8gg4breXp62gnhZxxxh8fZ+/N9PX8MHuao8KQm5n7/Pc2a9O2pL34/OqNNaOvi6irWSiErA+/IA66nssp8vpUUweDrs8V72SmbAQHKuSUfj/E2LGijZ2QJLkQ3QWmGNzJ7RxOUzapZ5FvceNEWONem0ce5eMTriJov3hh0YYm/snB6NkGvWXt4/2r1wjP5LBVZOJPE1UXL2Ki5E77QX8rksmLKuQFKih4SSLSdaMzsvdC3WSJsvzZSuZHIZq8ddzODxIB3RP2ydHwMw2ppQGw8++QDYgDgMZBCIYh9h7JiUtvYG5Gdlu21il2EzDjndtEBTnpm2GWEbngGNGFAoWaQdWn+hnQ1PjEhxxATEforVfGZsUxq/LvGRHjJXBrbC+nWnGi5qvUry83WQ19vPfGf64N+h6zfXVJbh7tDu8kEMw0SRu10xw+tVPx3SUVT7WzDg=";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDu5msvlegH4cSVL1oRGe2PLDSSLIC83BERdg7lZi7ZKKwDtDmEV1QxFoJyvVv8qyoaFip8cwkMOLnHLQ9WBjUoIPdMc/DEkLrb1zar0TC9gj8v9k0wGwI5R+6XTD4K5Q2LQlv7oOHqPjcKZvBREX4BFy2gcsYjx2dllr6KILmOtxPbgLiobX9gdfNU7WZx5vjncnS5Rl9yfTuLai/2Zq7xqPAgBfU8fqBN4MUAi1i+pK1JE0ykTeBr26E9TPfHaAlIhSiyJDJFkGDinqeryvJzQs5TFsHY5AeLPtgswFhLZG1GI/QoumXFpQYuagGF8i+svGZNyA/iQZyQUKDBJI9g5BCeFqzh8oJFiL4PFRw5n6WFi9MdIdyz3lCTvEnO0a9LLzlY7c4h7QItIKk/a18VI7DAbFJ+hJWy3DMXxCJ8iiLyo5Iv8CKHVvNZH+8U+gWfcjBU3LwPK8vey58WjefV3hK9JpCC06vOUGrJkxUIHQjTBWKrhNgDrGERrU19Bh0argdjcWa+nznKgePy4zu0s=";
     </script>
     
     <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
