@@ -62,6 +62,39 @@
         .editable-time:hover:before {
             opacity: 1;
         }
+        .editable-time-unset {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: inline-block;
+            min-width: 90px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #d6d8db;
+            position: relative;
+            font-weight: 400;
+            color: #6c757d;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: none;
+        }
+        .editable-time-unset:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .editable-time-unset:before {
+            content: '✏️';
+            position: absolute;
+            right: 4px;
+            top: 2px;
+            font-size: 10px;
+            opacity: 0.5;
+        }
+        .editable-time-unset:hover:before {
+            opacity: 0.8;
+        }
         .time-input {
             border: 3px solid #1976d2;
             border-radius: 8px;
@@ -124,34 +157,11 @@
             padding: 16px;
             margin: 16px 0;
         }
-        .edit-instruction {
-            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-            border: 3px solid #4caf50;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            animation: gentle-pulse 3s infinite;
-            box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
-        }
-        @keyframes gentle-pulse {
-            0%, 100% { box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2); }
-            50% { box-shadow: 0 6px 24px rgba(76, 175, 80, 0.3); }
-        }
-        .edit-hint {
-            background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 30%, #fff3e0 100%);
-            color: #e65100;
-            padding: 12px 20px;
-            border-radius: 25px;
-            font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(255, 204, 2, 0.3);
-            display: inline-block;
-            margin-top: 8px;
-            animation: hint-glow 2s infinite alternate;
-        }
-        @keyframes hint-glow {
-            0% { box-shadow: 0 4px 12px rgba(255, 204, 2, 0.3); }
-            100% { box-shadow: 0 6px 16px rgba(255, 204, 2, 0.5); }
+        .holiday-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            transform: scale(1.2);
         }
     </style>
 </head>
@@ -331,18 +341,6 @@
 
             <!-- Data Table -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-                <div class="edit-instruction">
-                    <div class="flex items-center justify-center text-green-800">
-                        <i class="fas fa-hand-pointer text-3xl mr-4"></i>
-                        <div class="text-center">
-                            <p class="text-xl font-bold mb-2">⚡ 簡単時間編集 ⚡</p>
-                            <p class="text-lg mb-1">青いボタン（出勤時間・退勤時間）をクリックするだけ！</p>
-                            <div class="edit-hint">
-                                <i class="fas fa-mouse-pointer mr-2"></i>クリック → 時間入力 → Enter確定
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 <div class="overflow-x-auto">
                     <table id="resultsTable" class="w-full">
                         <!-- Table will be generated here -->
@@ -459,7 +457,8 @@
                     endTime: '',
                     breakTime: '',
                     overtime: '',
-                    vacation: ''
+                    vacation: '',
+                    isHolidayWork: false
                 });
                 currentDate.setDate(currentDate.getDate() + 1);
             }
@@ -898,7 +897,8 @@
                         endTime: cells[4] || '',
                         breakTime: cells[5] || '',
                         overtime: cells[6] || '',
-                        vacation: cells[7] || ''
+                        vacation: cells[7] || '',
+                        isHolidayWork: false
                     });
                 }
             }
@@ -947,14 +947,14 @@
                 let overtimeCost = 0;
                 let basicSalary = 0;
 
-                // Only calculate if both start and end times exist and it's not a holiday
+                // Only calculate if both start and end times exist
                 if (displayStartTime && displayEndTime && displayStartTime !== '---' && displayEndTime !== '---' && 
-                    displayStartTime !== '' && displayEndTime !== '' && row.workType !== '休日') {
+                    displayStartTime !== '' && displayEndTime !== '') {
                     
                     workDays++;
                     
-                    // Count weekend work
-                    if (dayOfWeek === '土' || dayOfWeek === '日') {
+                    // Count holiday work based on checkbox
+                    if (row.isHolidayWork) {
                         holidayWorkDays++;
                     }
 
@@ -1001,13 +1001,13 @@
                     index: index,
                     date: row.date,
                     dayOfWeek: dayOfWeek,
-                    workType: row.workType || '',
                     startTime: displayStartTime,
                     endTime: displayEndTime,
                     actualWorkTime: actualWorkTime,
                     overtimeHours: overtimeHours,
                     overtimeCost: overtimeCost,
-                    basicSalary: basicSalary
+                    basicSalary: basicSalary,
+                    isHolidayWork: row.isHolidayWork || false
                 });
             });
 
@@ -1122,14 +1122,13 @@
         function updateTable() {
             const table = document.getElementById('resultsTable');
             const isPartTime = document.getElementById('employmentType').value === 'parttime';
-            const employmentTypeText = document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤';
             
             let tableHTML = `
                 <thead class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
                     <tr>
                         <th class="px-4 py-3 text-center">日付</th>
                         <th class="px-4 py-3 text-center">曜日</th>
-                        <th class="px-4 py-3 text-center">勤務形態</th>
+                        <th class="px-4 py-3 text-center">休日出勤</th>
                         <th class="px-4 py-3 text-center">出勤時間</th>
                         <th class="px-4 py-3 text-center">退勤時間</th>
                         <th class="px-4 py-3 text-center">実働時間</th>
@@ -1152,16 +1151,24 @@
                 const startTimeDisplay = row.startTime || '';
                 const endTimeDisplay = row.endTime || '';
                 
+                // Determine CSS class based on whether time is set or not
+                const startTimeClass = startTimeDisplay ? 'editable-time' : 'editable-time-unset';
+                const endTimeClass = endTimeDisplay ? 'editable-time' : 'editable-time-unset';
+                const startTimeText = startTimeDisplay || '未設定';
+                const endTimeText = endTimeDisplay || '未設定';
+                
                 tableHTML += `
                     <tr class="${bgClass} hover:bg-blue-50 transition-colors">
                         <td class="px-4 py-3 text-center">${row.date}</td>
                         <td class="px-4 py-3 text-center">${row.dayOfWeek}</td>
-                        <td class="px-4 py-3 text-center">${employmentTypeText}</td>
                         <td class="px-4 py-3 text-center">
-                            <span class="editable-time" data-row="${row.index}" data-field="startTime" onclick="editTime(this)" title="クリックして時間を編集">${startTimeDisplay || '未設定'}</span>
+                            <input type="checkbox" class="holiday-checkbox" data-row="${row.index}" onchange="updateHolidayWork(this)" ${row.isHolidayWork ? 'checked' : ''}>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <span class="editable-time" data-row="${row.index}" data-field="endTime" onclick="editTime(this)" title="クリックして時間を編集">${endTimeDisplay || '未設定'}</span>
+                            <span class="${startTimeClass}" data-row="${row.index}" data-field="startTime" onclick="editTime(this)" title="クリックして時間を編集">${startTimeText}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="${endTimeClass}" data-row="${row.index}" data-field="endTime" onclick="editTime(this)" title="クリックして時間を編集">${endTimeText}</span>
                         </td>
                         <td class="px-4 py-3 text-center">${row.actualWorkTime}</td>
                         <td class="px-4 py-3 text-center">${row.overtimeHours}</td>
@@ -1177,6 +1184,24 @@
 
             tableHTML += '</tbody>';
             table.innerHTML = tableHTML;
+        }
+
+        function updateHolidayWork(checkbox) {
+            const rowIndex = parseInt(checkbox.dataset.row);
+            
+            if (rowIndex >= 0 && rowIndex < allPeriodData.length) {
+                allPeriodData[rowIndex].isHolidayWork = checkbox.checked;
+                
+                // Update csvData to maintain consistency
+                csvData = [...allPeriodData];
+                
+                // Trigger recalculation
+                processData();
+                
+                const dateStr = allPeriodData[rowIndex].date;
+                const status = checkbox.checked ? 'ON' : 'OFF';
+                showMessage(`${dateStr} の休日出勤を${status}に設定しました`, 'success');
+            }
         }
 
         // Enhanced manual editing functionality with proper calculation linking
@@ -1342,7 +1367,7 @@
             }
 
             // Add headers
-            const headerRow = ['日付', '曜日', '勤務形態', '出勤時間', '退勤時間', '実働時間', '残業時間', '残業費用'];
+            const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '実働時間', '残業時間', '残業費用'];
             if (isPartTime) {
                 headerRow.push('基本給');
             }
@@ -1354,7 +1379,7 @@
                 const dataRow = [
                     row.date,
                     row.dayOfWeek,
-                    document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤',
+                    row.isHolidayWork ? '○' : '',
                     row.startTime,
                     row.endTime,
                     row.actualWorkTime,
@@ -1421,7 +1446,7 @@
             csvContent += '詳細\n';
             
             // Add headers
-            let headerLine = '日付,曜日,勤務形態,出勤時間,退勤時間,実働時間,残業時間,残業費用';
+            let headerLine = '日付,曜日,休日出勤,出勤時間,退勤時間,実働時間,残業時間,残業費用';
             if (isPartTime) {
                 headerLine += ',基本給';
             }
@@ -1432,7 +1457,7 @@
                 let dataLine = [
                     row.date,
                     row.dayOfWeek,
-                    document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤',
+                    row.isHolidayWork ? '○' : '',
                     row.startTime,
                     row.endTime,
                     row.actualWorkTime,
@@ -1495,9 +1520,9 @@
 </html>
     <script id="html_badge_script1">
         window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDu5msvlegH4cSVL1oRGe2PLDSSLIC83BERdg7lZi7ZKKwDtDmEV1QxFoJyvVv8qyoaFip8cwkMOLnHLQ9WBjUoIPdMc%2FDEkLrb1zar0TC9gj8v9k0wGwI5R%2B6XTD4K5Q2LQlv7oOHqPjcKZvBREX4BFy2gcsYjx2dllr6KILmOtxPbgLiobX9gdfNU7WZx5vjncnS5Rl9yfTuLai%2F2Zq7xqPAgBfU8fqBN4MUAi1i%2BpK1JE0ykTeBr26E9TPfHaAlIhSiyJDJFkGDinqeryvJzQs5TFsHY5AeLPtgswFhLZG1GI%2FQoumXFpQYuagGF8i%2BsvGZNyA%2FiQZyQUKDBJI9g5BCeFqzh8oJFiL4PFRw5n6WFi9MdIdyz3lCTvEnO0a9LLzlY7c4h7QItIKk%2Fa18VI7DAbFJ%2BhJWy3DMXxCJ8iiLyo5Iv8CKHVvNZH%2B8U%2BgWfcjBU3LwPK8vey58WjefV3hK9JpCC06vOUGrJkxUIHQjTBWKrhNgDrGERrU19Bh0argdjcWa%2BnznKgePy4zu0s%3D";
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDjCz%2Fp1ij%2BNVXaW%2Bz%2BEAjNLnMKVMMmITckL04nGgy7ctHABGnE4B48xVy%2F07d0mNi2VgXJ48uti7r8eoIcqo6j1Q0DHav9jA10hvtcGiZ2PVB0siKMDH4EQ0wZ1DwiYGXEqbU3Sa%2Fwl4ApA1Lr2Bv6CcfwAX2HCfhJP5oojbEsDG6AkFmi4a2nbXNFyEBSOpFC6%2FXUnTSwbt8dF4catbLbRsBIBQmGN1A3p1FY7irquOWN%2FRpyZrLI5SwYMUEP8Uj%2FCreJCsx1g5JiNGFuNnsoiTr21UGwQIVrePCmgNTMOuVtxHEafRHyDhBAjtv1KzkPTTOnWCPunRbfw8bSntPA%2FTCn%2B8zj%2BfC421oD2w%2BSsLpI0YoKG0qcQgXib0GO%2Fc2dTWfP2eMZbRu0l70VDe37jE38uWghwsbHrxpZcCABtR4f2L2jWtXPKRTRNz7c8x%2FexeavQXtgC6wPvQO73rSU45jRT4934f5ks%2BeQoBYmqLdMbJ9hJvfEPPGMqEvnujX9Dp4koi1GZ5xlPjL7cY4jk%3D";
         window.__genspark_locale = "ja-JP";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDu5msvlegH4cSVL1oRGe2PLDSSLIC83BERdg7lZi7ZKKwDtDmEV1QxFoJyvVv8qyoaFip8cwkMOLnHLQ9WBjUoIPdMc/DEkLrb1zar0TC9gj8v9k0wGwI5R+6XTD4K5Q2LQlv7oOHqPjcKZvBREX4BFy2gcsYjx2dllr6KILmOtxPbgLiobX9gdfNU7WZx5vjncnS5Rl9yfTuLai/2Zq7xqPAgBfU8fqBN4MUAi1i+pK1JE0ykTeBr26E9TPfHaAlIhSiyJDJFkGDinqeryvJzQs5TFsHY5AeLPtgswFhLZG1GI/QoumXFpQYuagGF8i+svGZNyA/iQZyQUKDBJI9g5BCeFqzh8oJFiL4PFRw5n6WFi9MdIdyz3lCTvEnO0a9LLzlY7c4h7QItIKk/a18VI7DAbFJ+hJWy3DMXxCJ8iiLyo5Iv8CKHVvNZH+8U+gWfcjBU3LwPK8vey58WjefV3hK9JpCC06vOUGrJkxUIHQjTBWKrhNgDrGERrU19Bh0argdjcWa+nznKgePy4zu0s=";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDjCz/p1ij+NVXaW+z+EAjNLnMKVMMmITckL04nGgy7ctHABGnE4B48xVy/07d0mNi2VgXJ48uti7r8eoIcqo6j1Q0DHav9jA10hvtcGiZ2PVB0siKMDH4EQ0wZ1DwiYGXEqbU3Sa/wl4ApA1Lr2Bv6CcfwAX2HCfhJP5oojbEsDG6AkFmi4a2nbXNFyEBSOpFC6/XUnTSwbt8dF4catbLbRsBIBQmGN1A3p1FY7irquOWN/RpyZrLI5SwYMUEP8Uj/CreJCsx1g5JiNGFuNnsoiTr21UGwQIVrePCmgNTMOuVtxHEafRHyDhBAjtv1KzkPTTOnWCPunRbfw8bSntPA/TCn+8zj+fC421oD2w+SsLpI0YoKG0qcQgXib0GO/c2dTWfP2eMZbRu0l70VDe37jE38uWghwsbHrxpZcCABtR4f2L2jWtXPKRTRNz7c8x/exeavQXtgC6wPvQO73rSU45jRT4934f5ks+eQoBYmqLdMbJ9hJvfEPPGMqEvnujX9Dp4koi1GZ5xlPjL7cY4jk=";
     </script>
     
     <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
