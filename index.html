@@ -31,23 +31,55 @@
         }
         .editable-time {
             cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
             display: inline-block;
-            min-width: 60px;
+            min-width: 90px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #42a5f5;
+            position: relative;
+            font-weight: 700;
+            color: #0d47a1;
+            font-size: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(66, 165, 245, 0.3);
         }
         .editable-time:hover {
-            background-color: #e0f2fe;
+            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+            border-color: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(66, 165, 245, 0.4);
+        }
+        .editable-time:before {
+            content: '📝';
+            position: absolute;
+            right: 4px;
+            top: 2px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        .editable-time:hover:before {
+            opacity: 1;
         }
         .time-input {
-            border: 2px solid #3b82f6;
-            border-radius: 4px;
-            padding: 4px 8px;
-            font-size: inherit;
+            border: 3px solid #1976d2;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 15px;
             font-family: inherit;
-            width: 80px;
+            width: 120px;
             text-align: center;
+            background: linear-gradient(135deg, #fff 0%, #f3f8ff 100%);
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.4);
+            font-weight: 700;
+            color: #0d47a1;
+            outline: none;
+        }
+        .time-input:focus {
+            border-color: #0d47a1;
+            box-shadow: 0 6px 20px rgba(25, 118, 210, 0.5);
+            transform: scale(1.05);
         }
          {
             body { margin: 0; }
@@ -85,6 +117,42 @@
             padding: 16px;
             margin: 16px 0;
         }
+        .period-setting {
+            background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .edit-instruction {
+            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+            border: 3px solid #4caf50;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            animation: gentle-pulse 3s infinite;
+            box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
+        }
+        @keyframes gentle-pulse {
+            0%, 100% { box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2); }
+            50% { box-shadow: 0 6px 24px rgba(76, 175, 80, 0.3); }
+        }
+        .edit-hint {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 30%, #fff3e0 100%);
+            color: #e65100;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(255, 204, 2, 0.3);
+            display: inline-block;
+            margin-top: 8px;
+            animation: hint-glow 2s infinite alternate;
+        }
+        @keyframes hint-glow {
+            0% { box-shadow: 0 4px 12px rgba(255, 204, 2, 0.3); }
+            100% { box-shadow: 0 6px 16px rgba(255, 204, 2, 0.5); }
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -95,7 +163,7 @@
                 <h1 class="text-4xl font-bold mb-4">
                     <i class="fas fa-calculator mr-3"></i>勤務実績表自動作成システム
                 </h1>
-                <p class="text-xl opacity-90">タイムカードのCSVファイルから自動で勤務実績表を作成します</p>
+                <p class="text-xl opacity-90">ExcelタイムカードのCSVファイルから自動で勤務実績表を作成します</p>
             </div>
         </div>
 
@@ -132,6 +200,27 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">対象年月</label>
                         <input type="month" id="targetMonth" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
+                    
+                    <!-- Period Setting -->
+                    <div class="period-setting">
+                        <h4 class="text-lg font-semibold text-purple-800 mb-3 flex items-center">
+                            <i class="fas fa-calendar-alt mr-2"></i>対象期間設定
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-purple-700 mb-1">開始日</label>
+                                <input type="date" id="periodStartDate" onchange="generatePeriodAndMergeData()" class="w-full px-3 py-2 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-purple-700 mb-1">終了日</label>
+                                <input type="date" id="periodEndDate" onchange="generatePeriodAndMergeData()" class="w-full px-3 py-2 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 text-sm">
+                            </div>
+                        </div>
+                        <p class="text-xs text-purple-600 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>期間を設定すると、該当期間のすべての日付を表示し、CSVデータを自動入力します
+                        </p>
+                    </div>
+                    
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">勤務形態</label>
                         <select id="employmentType" onchange="toggleHourlyWage()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -242,11 +331,17 @@
 
             <!-- Data Table -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-                <div class="p-4 bg-gray-50 border-b">
-                    <p class="text-sm text-gray-600">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        出勤時間・退勤時間をクリックすると編集できます
-                    </p>
+                <div class="edit-instruction">
+                    <div class="flex items-center justify-center text-green-800">
+                        <i class="fas fa-hand-pointer text-3xl mr-4"></i>
+                        <div class="text-center">
+                            <p class="text-xl font-bold mb-2">⚡ 簡単時間編集 ⚡</p>
+                            <p class="text-lg mb-1">青いボタン（出勤時間・退勤時間）をクリックするだけ！</p>
+                            <div class="edit-hint">
+                                <i class="fas fa-mouse-pointer mr-2"></i>クリック → 時間入力 → Enter確定
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table id="resultsTable" class="w-full">
@@ -285,6 +380,7 @@
         let csvData = [];
         let originalCsvData = [];
         let processedData = [];
+        let allPeriodData = [];
         let summaryData = {
             workDays: 0,
             holidayWorkDays: 0,
@@ -308,6 +404,7 @@
             initializeDaySettings();
             setupEventListeners();
             setDefaultMonth();
+            setDefaultPeriod();
         });
 
         function setDefaultMonth() {
@@ -315,6 +412,106 @@
             const year = today.getFullYear();
             const month = String(today.getMonth() + 1).padStart(2, '0');
             document.getElementById('targetMonth').value = `${year}-${month}`;
+        }
+
+        function setDefaultPeriod() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            
+            // Set to current month's first and last day
+            const startDate = new Date(year, month, 1);
+            const endDate = new Date(year, month + 1, 0);
+            
+            document.getElementById('periodStartDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('periodEndDate').value = endDate.toISOString().split('T')[0];
+            
+            // Generate initial period data
+            generatePeriodAndMergeData();
+        }
+
+        function generatePeriodAndMergeData() {
+            const startDate = document.getElementById('periodStartDate').value;
+            const endDate = document.getElementById('periodEndDate').value;
+
+            if (!startDate || !endDate) {
+                return;
+            }
+
+            // Generate all dates in the period
+            allPeriodData = [];
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (start > end) {
+                showMessage('開始日は終了日より前の日付を選択してください', 'error');
+                return;
+            }
+            
+            let currentDate = new Date(start);
+            while (currentDate <= end) {
+                const dateString = currentDate.toISOString().split('T')[0];
+                allPeriodData.push({
+                    date: dateString,
+                    workClass: '',
+                    workType: '',
+                    startTime: '',
+                    endTime: '',
+                    breakTime: '',
+                    overtime: '',
+                    vacation: ''
+                });
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // Merge with CSV data if available
+            if (originalCsvData.length > 0) {
+                mergeCSVWithPeriodData();
+            }
+
+            // Process and display
+            csvData = [...allPeriodData];
+            processData();
+            document.getElementById('results').classList.remove('hidden');
+            
+            showMessage(`期間 ${startDate} ～ ${endDate} の${allPeriodData.length}日間を表示しています`, 'success');
+        }
+
+        function mergeCSVWithPeriodData() {
+            // Create a map of CSV data by date for quick lookup
+            const csvDataMap = {};
+            originalCsvData.forEach(row => {
+                if (row.date) {
+                    // Normalize date format - handle various formats
+                    let normalizedDate = row.date;
+                    
+                    // Handle different date formats
+                    if (normalizedDate.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                        // Convert YYYY/M/D to YYYY-MM-DD
+                        const parts = normalizedDate.split('/');
+                        normalizedDate = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                    } else if (normalizedDate.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                        // Convert M/D/YYYY to YYYY-MM-DD
+                        const parts = normalizedDate.split('/');
+                        normalizedDate = parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+                    } else if (normalizedDate.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                        // Convert YYYY-M-D to YYYY-MM-DD
+                        const parts = normalizedDate.split('-');
+                        normalizedDate = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                    }
+                    
+                    csvDataMap[normalizedDate] = { ...row, date: normalizedDate };
+                }
+            });
+
+            // Merge CSV data with period data
+            allPeriodData.forEach(periodRow => {
+                const csvRow = csvDataMap[periodRow.date];
+                if (csvRow) {
+                    // Merge CSV data into period data, preserving the period date format
+                    Object.assign(periodRow, csvRow, { date: periodRow.date });
+                }
+            });
         }
 
         function initializeDaySettings() {
@@ -413,6 +610,9 @@
             // Hide results section
             document.getElementById('results').classList.add('hidden');
             
+            // Regenerate period data if period is set
+            generatePeriodAndMergeData();
+            
             // Show success message
             showMessage('ファイル選択をクリアしました', 'success');
         }
@@ -425,7 +625,11 @@
                     breakTime: parseInt(document.getElementById('bulkBreakTime').value) || 60,
                     overtimeRate: parseInt(document.getElementById('bulkOvertimeRate').value) || 1500
                 },
-                daySettings: { ...daySettings }
+                daySettings: { ...daySettings },
+                periodSettings: {
+                    startDate: document.getElementById('periodStartDate').value,
+                    endDate: document.getElementById('periodEndDate').value
+                }
             };
 
             const settingsJson = JSON.stringify(settings, null, 2);
@@ -474,6 +678,16 @@
                         document.getElementById('bulkOvertimeRate').value = settings.bulkSettings.overtimeRate;
                     }
 
+                    // Apply period settings
+                    if (settings.periodSettings) {
+                        if (settings.periodSettings.startDate) {
+                            document.getElementById('periodStartDate').value = settings.periodSettings.startDate;
+                        }
+                        if (settings.periodSettings.endDate) {
+                            document.getElementById('periodEndDate').value = settings.periodSettings.endDate;
+                        }
+                    }
+
                     // Apply day settings
                     const days = ['月', '火', '水', '木', '金', '土', '日'];
                     days.forEach(day => {
@@ -491,10 +705,8 @@
                         }
                     });
 
-                    // Recalculate if data exists
-                    if (csvData.length > 0) {
-                        processData();
-                    }
+                    // Regenerate period and merge if needed
+                    generatePeriodAndMergeData();
 
                     showMessage('設定をインポートしました', 'success');
                     
@@ -534,7 +746,7 @@
             daySettings[day][setting] = setting === 'breakTime' || setting === 'overtimeRate' ? 
                                       parseInt(value) || 0 : value;
             
-            if (csvData.length > 0) {
+            if (allPeriodData.length > 0) {
                 processData();
             }
         }
@@ -558,7 +770,7 @@
 
             showMessage('全曜日の設定を更新しました', 'success');
             
-            if (csvData.length > 0) {
+            if (allPeriodData.length > 0) {
                 processData();
             }
         }
@@ -571,29 +783,33 @@
                 return;
             }
 
-            if (originalCsvData.length === 0) {
-                showMessage('先にCSVファイルを読み込んでください', 'error');
+            if (allPeriodData.length === 0) {
+                showMessage('先に対象期間を設定してください', 'error');
                 return;
             }
 
             const correctionMinutes = timeToMinutes(correctionTime);
             let changedCount = 0;
 
-            // Reset to original data
-            csvData = originalCsvData.map(row => ({ ...row }));
-
-            // Apply correction only to late arrivals
-            csvData.forEach(row => {
+            // Apply correction to current period data
+            allPeriodData.forEach(row => {
                 if (row.workType !== '休日' && row.workType !== '' && row.startTime && row.startTime !== '---') {
                     const startMinutes = timeToMinutes(row.startTime);
                     if (startMinutes !== null && startMinutes > correctionMinutes) {
                         row.startTime = correctionTime;
                         changedCount++;
+                        
+                        // Also update original CSV data if it exists
+                        const originalIndex = originalCsvData.findIndex(orig => orig.date === row.date);
+                        if (originalIndex !== -1) {
+                            originalCsvData[originalIndex].startTime = correctionTime;
+                        }
                     }
                 }
             });
 
             if (changedCount > 0) {
+                csvData = [...allPeriodData];
                 processData();
                 showMessage(`${changedCount}件の出勤時間を${correctionTime}に変更しました`, 'success');
             } else {
@@ -650,12 +866,20 @@
                 return;
             }
 
-            csvData = originalCsvData.map(row => ({ ...row }));
-            showMessage(`${csvData.length}件のデータを読み込みました`, 'success');
-            processData();
+            showMessage(`${originalCsvData.length}件のデータを読み込みました`, 'success');
+            
+            // Merge with period data and process
+            generatePeriodAndMergeData();
         }
 
         function processData() {
+            if (!allPeriodData || allPeriodData.length === 0) {
+                return;
+            }
+
+            // Update csvData from allPeriodData to ensure consistency
+            csvData = [...allPeriodData];
+
             processedData = [];
             let workDays = 0;
             let holidayWorkDays = 0;
@@ -667,54 +891,66 @@
             const isPartTime = document.getElementById('employmentType').value === 'parttime';
             const hourlyWage = parseInt(document.getElementById('hourlyWage').value) || 1000;
 
-            csvData.forEach((row, index) => {
+            allPeriodData.forEach((row, index) => {
                 if (!row.date) return;
 
                 const date = new Date(row.date);
                 const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
                 
                 let displayStartTime = row.startTime || '';
-                if (!displayStartTime && row.workType && row.workType !== '休日') {
-                    displayStartTime = '---';
-                }
+                let displayEndTime = row.endTime || '';
                 
                 let actualWorkTime = '';
                 let overtimeHours = '';
                 let overtimeCost = 0;
                 let basicSalary = 0;
 
-                if (row.workType && row.workType !== '休日' && row.startTime && row.endTime) {
+                // Only calculate if both start and end times exist and it's not a holiday
+                if (displayStartTime && displayEndTime && displayStartTime !== '---' && displayEndTime !== '---' && 
+                    displayStartTime !== '' && displayEndTime !== '' && row.workType !== '休日') {
+                    
                     workDays++;
                     
+                    // Count weekend work
                     if (dayOfWeek === '土' || dayOfWeek === '日') {
                         holidayWorkDays++;
                     }
 
-                    const startMinutes = timeToMinutes(row.startTime);
-                    const endMinutes = timeToMinutes(row.endTime);
-                    const breakMinutes = daySettings[dayOfWeek]?.breakTime || 60;
+                    const startMinutes = timeToMinutes(displayStartTime);
+                    const endMinutes = timeToMinutes(displayEndTime);
                     
                     if (startMinutes !== null && endMinutes !== null && endMinutes > startMinutes) {
-                        const workMinutes = endMinutes - startMinutes - breakMinutes;
-                        const actualWorkMinutes = Math.max(0, workMinutes);
-                        actualWorkTime = minutesToTime(actualWorkMinutes);
-                        totalWorkMinutes += actualWorkMinutes;
+                        // Get break time for this day of week
+                        const breakMinutes = parseInt(daySettings[dayOfWeek]?.breakTime) || 60;
+                        
+                        // Calculate actual work time (total time - break time)
+                        const totalMinutes = endMinutes - startMinutes;
+                        const actualWorkMinutes = Math.max(0, totalMinutes - breakMinutes);
+                        
+                        if (actualWorkMinutes > 0) {
+                            actualWorkTime = minutesToTime(actualWorkMinutes);
+                            totalWorkMinutes += actualWorkMinutes;
 
-                        if (isPartTime) {
-                            basicSalary = Math.round((actualWorkMinutes / 60) * hourlyWage);
-                            totalBasicSalary += basicSalary;
-                        }
+                            // Calculate basic salary for part-time workers
+                            if (isPartTime) {
+                                basicSalary = Math.round((actualWorkMinutes / 60) * hourlyWage);
+                                totalBasicSalary += basicSalary;
+                            }
 
-                        const overtimeStartMinutes = timeToMinutes(daySettings[dayOfWeek]?.overtimeStart || '18:00');
-                        if (endMinutes > overtimeStartMinutes) {
-                            const overtimeMinutes = endMinutes - overtimeStartMinutes;
-                            overtimeHours = minutesToTime(overtimeMinutes);
-                            
-                            const overtimeRate = daySettings[dayOfWeek]?.overtimeRate || 1500;
-                            overtimeCost = Math.round((overtimeMinutes / 60) * overtimeRate);
-                            
-                            totalOvertimeMinutes += overtimeMinutes;
-                            totalOvertimeCost += overtimeCost;
+                            // Calculate overtime
+                            const overtimeStartMinutes = timeToMinutes(daySettings[dayOfWeek]?.overtimeStart || '18:00');
+                            if (endMinutes > overtimeStartMinutes) {
+                                const overtimeMinutes = Math.max(0, endMinutes - overtimeStartMinutes);
+                                if (overtimeMinutes > 0) {
+                                    overtimeHours = minutesToTime(overtimeMinutes);
+                                    
+                                    const overtimeRate = parseInt(daySettings[dayOfWeek]?.overtimeRate) || 1500;
+                                    overtimeCost = Math.round((overtimeMinutes / 60) * overtimeRate);
+                                    
+                                    totalOvertimeMinutes += overtimeMinutes;
+                                    totalOvertimeCost += overtimeCost;
+                                }
+                            }
                         }
                     }
                 }
@@ -725,7 +961,7 @@
                     dayOfWeek: dayOfWeek,
                     workType: row.workType || '',
                     startTime: displayStartTime,
-                    endTime: row.endTime || '',
+                    endTime: displayEndTime,
                     actualWorkTime: actualWorkTime,
                     overtimeHours: overtimeHours,
                     overtimeCost: overtimeCost,
@@ -750,7 +986,7 @@
         }
 
         function timeToMinutes(timeStr) {
-            if (!timeStr || timeStr === '---') return null;
+            if (!timeStr || timeStr === '---' || timeStr === '') return null;
             
             const parts = timeStr.split(':');
             if (parts.length !== 2) return null;
@@ -844,7 +1080,6 @@
         function updateTable() {
             const table = document.getElementById('resultsTable');
             const isPartTime = document.getElementById('employmentType').value === 'parttime';
-            // Fix: Use employment type text instead of name
             const employmentTypeText = document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤';
             
             let tableHTML = `
@@ -872,16 +1107,19 @@
 
             processedData.forEach((row, index) => {
                 const bgClass = index % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                const startTimeDisplay = row.startTime || '';
+                const endTimeDisplay = row.endTime || '';
+                
                 tableHTML += `
                     <tr class="${bgClass} hover:bg-blue-50 transition-colors">
                         <td class="px-4 py-3 text-center">${row.date}</td>
                         <td class="px-4 py-3 text-center">${row.dayOfWeek}</td>
                         <td class="px-4 py-3 text-center">${employmentTypeText}</td>
                         <td class="px-4 py-3 text-center">
-                            <span class="editable-time" data-row="${row.index}" data-field="startTime" onclick="editTime(this)">${row.startTime}</span>
+                            <span class="editable-time" data-row="${row.index}" data-field="startTime" onclick="editTime(this)" title="クリックして時間を編集">${startTimeDisplay || '未設定'}</span>
                         </td>
                         <td class="px-4 py-3 text-center">
-                            <span class="editable-time" data-row="${row.index}" data-field="endTime" onclick="editTime(this)">${row.endTime}</span>
+                            <span class="editable-time" data-row="${row.index}" data-field="endTime" onclick="editTime(this)" title="クリックして時間を編集">${endTimeDisplay || '未設定'}</span>
                         </td>
                         <td class="px-4 py-3 text-center">${row.actualWorkTime}</td>
                         <td class="px-4 py-3 text-center">${row.overtimeHours}</td>
@@ -899,43 +1137,119 @@
             table.innerHTML = tableHTML;
         }
 
-        // Manual editing functionality
+        // Enhanced manual editing functionality with proper calculation linking
         function editTime(element) {
             const currentValue = element.textContent.trim();
-            if (currentValue === '---' || !currentValue) return;
+            const displayValue = currentValue === '未設定' ? '' : currentValue;
             
+            // Create simple time input
             const input = document.createElement('input');
             input.type = 'time';
-            input.value = currentValue;
+            input.value = displayValue;
             input.className = 'time-input';
             
-            input.addEventListener('blur', function() {
-                const newValue = this.value;
-                const rowIndex = parseInt(element.dataset.row);
-                const field = element.dataset.field;
-                
-                // Update data
-                if (field === 'startTime') {
-                    originalCsvData[rowIndex].startTime = newValue;
-                    csvData[rowIndex].startTime = newValue;
-                } else if (field === 'endTime') {
-                    originalCsvData[rowIndex].endTime = newValue;
-                    csvData[rowIndex].endTime = newValue;
-                }
-                
-                // Recalculate and redisplay
-                processData();
-            });
-            
-            input.addEventListener('keypress', function(e) {
+            // Add event listeners for simple interaction
+            input.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
-                    this.blur();
+                    e.preventDefault();
+                    saveTimeEdit(element, this.value);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelTimeEdit(element, currentValue);
                 }
             });
             
-            element.textContent = '';
+            input.addEventListener('blur', function(e) {
+                // Small delay to prevent conflicts
+                setTimeout(() => {
+                    if (document.contains(this)) {
+                        saveTimeEdit(element, this.value);
+                    }
+                }, 100);
+            });
+            
+            // Replace element content with input
+            element.innerHTML = '';
             element.appendChild(input);
+            
+            // Focus and select
             input.focus();
+            input.select();
+        }
+
+        function saveTimeEdit(element, newValue) {
+            const rowIndex = parseInt(element.dataset.row);
+            const field = element.dataset.field;
+            
+            // Validate row index
+            if (rowIndex < 0 || rowIndex >= allPeriodData.length) {
+                showMessage('データの更新に失敗しました: 無効な行インデックス', 'error');
+                cancelTimeEdit(element, element.textContent || '未設定');
+                return;
+            }
+            
+            // Update data in allPeriodData (primary data source)
+            if (allPeriodData[rowIndex] !== undefined) {
+                const oldValue = allPeriodData[rowIndex][field];
+                allPeriodData[rowIndex][field] = newValue;
+                
+                // Also update original CSV data if it exists
+                const normalizeDate = (dateStr) => {
+                    if (!dateStr) return '';
+                    
+                    if (dateStr.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                        const parts = dateStr.split('/');
+                        return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                    } else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                        const parts = dateStr.split('/');
+                        return parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+                    } else if (dateStr.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                        const parts = dateStr.split('-');
+                        return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                    }
+                    return dateStr;
+                };
+                
+                const originalRow = originalCsvData.find(row => {
+                    return normalizeDate(row.date) === normalizeDate(allPeriodData[rowIndex].date);
+                });
+                
+                if (originalRow) {
+                    originalRow[field] = newValue;
+                }
+                
+                // Update csvData to maintain consistency
+                csvData = [...allPeriodData];
+                
+                try {
+                    // Trigger full recalculation
+                    processData();
+                    
+                    // Show confirmation message
+                    const fieldName = field === 'startTime' ? '出勤時間' : '退勤時間';
+                    const timeDisplay = newValue || '未設定';
+                    showMessage(`✅ ${allPeriodData[rowIndex].date} の${fieldName}を「${timeDisplay}」に更新しました`, 'success');
+                    
+                } catch (error) {
+                    // Rollback on error
+                    allPeriodData[rowIndex][field] = oldValue;
+                    if (originalRow) {
+                        originalRow[field] = oldValue;
+                    }
+                    csvData = [...allPeriodData];
+                    processData();
+                    
+                    showMessage('計算中にエラーが発生しました: ' + error.message, 'error');
+                }
+                
+            } else {
+                showMessage('データの更新に失敗しました: データが見つかりません', 'error');
+                cancelTimeEdit(element, element.textContent || '未設定');
+            }
+        }
+
+        function cancelTimeEdit(element, originalValue) {
+            element.innerHTML = originalValue;
         }
 
         function exportToExcel() {
@@ -948,6 +1262,8 @@
             const targetMonth = document.getElementById('targetMonth').value;
             const employmentType = document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤';
             const hourlyWage = document.getElementById('hourlyWage').value;
+            const startDate = document.getElementById('periodStartDate').value;
+            const endDate = document.getElementById('periodEndDate').value;
             const fileName = `${employeeName}_${targetMonth.replace('-', '')}_勤務実績表.xlsx`;
             const isPartTime = document.getElementById('employmentType').value === 'parttime';
 
@@ -959,6 +1275,7 @@
                 [''],
                 ['氏名', employeeName],
                 ['対象月', targetMonth],
+                ['対象期間', `${startDate} ～ ${endDate}`],
                 ['勤務形態', employmentType]
             ];
 
@@ -1027,6 +1344,8 @@
             const targetMonth = document.getElementById('targetMonth').value;
             const employmentType = document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤';
             const hourlyWage = document.getElementById('hourlyWage').value;
+            const startDate = document.getElementById('periodStartDate').value;
+            const endDate = document.getElementById('periodEndDate').value;
             const fileName = `${employeeName}_${targetMonth.replace('-', '')}_勤務実績表.csv`;
             const isPartTime = document.getElementById('employmentType').value === 'parttime';
 
@@ -1037,6 +1356,7 @@
             csvContent += '\n';
             csvContent += `氏名,${employeeName}\n`;
             csvContent += `対象月,${targetMonth}\n`;
+            csvContent += `対象期間,${startDate} ～ ${endDate}\n`;
             csvContent += `勤務形態,${employmentType}\n`;
             
             if (isPartTime) {
@@ -1133,9 +1453,9 @@
 </html>
     <script id="html_badge_script1">
         window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDgxHddIMKUyYACn1dPrsVwCec6xbLGxLKDka0lOtFkw6VWPjUCpW4i675H69GNUkdDwcwwBqcU3SiG0Vay5w343v%2FPNonUKTnxxW6up7IU%2Bh0pPDsbuqYtsJRISkZO4ysfQ3UJ7nG1TOj%2FhUl3oKWpDkcWAnbdpzOHM%2FL%2BohXdQ8NUdMb4FWtICMNbgY5OYWWG3qsQTxNjq0aLTfFi45Noa6%2BHtFDbpECvBRxU9U3tf144R4vKdKU5fDC8rdjsHpfsZEJDo1UcpkAlj5xyBR1jmSSmL1bvOxIiXu500gSmU4cre9w9AdSJSD98boY8CBHdxwkdpMGa7rbs2k4n8iecV%2BtAYCP%2BfCEQULS15GGR%2BgRYF%2Be2%2BFYE3vrRDMvCV1BM2MAkx0UlvwK7U0Qu%2BpF%2F2yWyAsMv7qIqnDhIIsQJUczsZ%2BUAe7o2vf85n%2FFXlDUidyWU4fn1mz4Dzko%2B%2F3VQPh81%2F7HX7vKas1zEYP2Rhs8Ua1%2FtYWpv9GhysRERHjKCs1Me6j1i291gIkJeFV7x3IaUN2QZOBIotzWo9ohd7B";
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDkQQjRr%2FJlr9BYojbIo%2FxVBDyA9BtfEWJPDyXbay0%2Bu%2BrMpFzEeJcCN48oX9Cc2V6AmmvxGqX5PWGR6MBqjc8gg4breXp62gnhZxxxh8fZ%2B%2FN9PX8MHuao8KQm5n7%2FPc2a9O2pL34%2FOqNNaOvi6irWSiErA%2B%2FIA66nssp8vpUUweDrs8V72SmbAQHKuSUfj%2FE2LGijZ2QJLkQ3QWmGNzJ7RxOUzapZ5FvceNEWONem0ce5eMTriJov3hh0YYm%2FsnB6NkGvWXt4%2F2r1wjP5LBVZOJPE1UXL2Ki5E77QX8rksmLKuQFKih4SSLSdaMzsvdC3WSJsvzZSuZHIZq8ddzODxIB3RP2ydHwMw2ppQGw8%2B%2BQDYgDgMZBCIYh9h7JiUtvYG5Gdlu21il2EzDjndtEBTnpm2GWEbngGNGFAoWaQdWn%2BhnQ1PjEhxxATEforVfGZsUxq%2FLvGRHjJXBrbC%2BnWnGi5qvUry83WQ19vPfGf64N%2Bh6zfXVJbh7tDu8kEMw0SRu10xw%2BtVPx3SUVT7WzDg%3D";
         window.__genspark_locale = "ja-JP";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDgxHddIMKUyYACn1dPrsVwCec6xbLGxLKDka0lOtFkw6VWPjUCpW4i675H69GNUkdDwcwwBqcU3SiG0Vay5w343v/PNonUKTnxxW6up7IU+h0pPDsbuqYtsJRISkZO4ysfQ3UJ7nG1TOj/hUl3oKWpDkcWAnbdpzOHM/L+ohXdQ8NUdMb4FWtICMNbgY5OYWWG3qsQTxNjq0aLTfFi45Noa6+HtFDbpECvBRxU9U3tf144R4vKdKU5fDC8rdjsHpfsZEJDo1UcpkAlj5xyBR1jmSSmL1bvOxIiXu500gSmU4cre9w9AdSJSD98boY8CBHdxwkdpMGa7rbs2k4n8iecV+tAYCP+fCEQULS15GGR+gRYF+e2+FYE3vrRDMvCV1BM2MAkx0UlvwK7U0Qu+pF/2yWyAsMv7qIqnDhIIsQJUczsZ+UAe7o2vf85n/FXlDUidyWU4fn1mz4Dzko+/3VQPh81/7HX7vKas1zEYP2Rhs8Ua1/tYWpv9GhysRERHjKCs1Me6j1i291gIkJeFV7x3IaUN2QZOBIotzWo9ohd7B";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDkQQjRr/Jlr9BYojbIo/xVBDyA9BtfEWJPDyXbay0+u+rMpFzEeJcCN48oX9Cc2V6AmmvxGqX5PWGR6MBqjc8gg4breXp62gnhZxxxh8fZ+/N9PX8MHuao8KQm5n7/Pc2a9O2pL34/OqNNaOvi6irWSiErA+/IA66nssp8vpUUweDrs8V72SmbAQHKuSUfj/E2LGijZ2QJLkQ3QWmGNzJ7RxOUzapZ5FvceNEWONem0ce5eMTriJov3hh0YYm/snB6NkGvWXt4/2r1wjP5LBVZOJPE1UXL2Ki5E77QX8rksmLKuQFKih4SSLSdaMzsvdC3WSJsvzZSuZHIZq8ddzODxIB3RP2ydHwMw2ppQGw8++QDYgDgMZBCIYh9h7JiUtvYG5Gdlu21il2EzDjndtEBTnpm2GWEbngGNGFAoWaQdWn+hnQ1PjEhxxATEforVfGZsUxq/LvGRHjJXBrbC+nWnGi5qvUry83WQ19vPfGf64N+h6zfXVJbh7tDu8kEMw0SRu10xw+tVPx3SUVT7WzDg=";
     </script>
     
     <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
