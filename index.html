@@ -951,11 +951,11 @@
                 if (displayStartTime && displayEndTime && displayStartTime !== '---' && displayEndTime !== '---' && 
                     displayStartTime !== '' && displayEndTime !== '') {
                     
-                    workDays++;
-                    
-                    // Count holiday work based on checkbox
+                    // Fixed: Count holiday work and work days separately
                     if (row.isHolidayWork) {
                         holidayWorkDays++;
+                    } else {
+                        workDays++;  // Only count as regular work day if NOT holiday work
                     }
 
                     const startMinutes = timeToMinutes(displayStartTime);
@@ -1520,9 +1520,9 @@
 </html>
     <script id="html_badge_script1">
         window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDjCz%2Fp1ij%2BNVXaW%2Bz%2BEAjNLnMKVMMmITckL04nGgy7ctHABGnE4B48xVy%2F07d0mNi2VgXJ48uti7r8eoIcqo6j1Q0DHav9jA10hvtcGiZ2PVB0siKMDH4EQ0wZ1DwiYGXEqbU3Sa%2Fwl4ApA1Lr2Bv6CcfwAX2HCfhJP5oojbEsDG6AkFmi4a2nbXNFyEBSOpFC6%2FXUnTSwbt8dF4catbLbRsBIBQmGN1A3p1FY7irquOWN%2FRpyZrLI5SwYMUEP8Uj%2FCreJCsx1g5JiNGFuNnsoiTr21UGwQIVrePCmgNTMOuVtxHEafRHyDhBAjtv1KzkPTTOnWCPunRbfw8bSntPA%2FTCn%2B8zj%2BfC421oD2w%2BSsLpI0YoKG0qcQgXib0GO%2Fc2dTWfP2eMZbRu0l70VDe37jE38uWghwsbHrxpZcCABtR4f2L2jWtXPKRTRNz7c8x%2FexeavQXtgC6wPvQO73rSU45jRT4934f5ks%2BeQoBYmqLdMbJ9hJvfEPPGMqEvnujX9Dp4koi1GZ5xlPjL7cY4jk%3D";
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDnLh%2Fy8VHekknvekxh%2FsHIg1gn0HNx9FR6PJriGV41PAYYwT%2FJrTk%2Brtn1s1HZE8I5yPOS48SzRYTAR4LTFsX%2FtUhoLvb3VsOFj04eFbfKzHBzeMu97Cpt1xMDaQ7K73hKuIA57zsZM0QxAmnLDEY%2F4eDkJJ10PMU1k0v0WN6%2FPeVSRZgUylYpQpkgHMF%2FBniwGcCGRPPj4UZUC6FU5W68YQCYpl%2FmX0shInU6YsygE%2BdKs2Y9MxCJooRWslazdWW6SL1hLhlAQVqPFvBcLt7pDobaLR2%2F4jDTjTCEoKxlGeT8vNX2505hYyutntdbArYrTcSqyCPg1ddKeRAGEJJ2xOOmXF00r%2BHDuR6NeTL6Y%2BTUozjc78AUr06qBHE1OZ4p7IbSj2BbZk1pcbbKybBF1EkXOGivMzzWbpo0Axz9%2BPnlOqiVaDEcY2cv8shP7g0AznMNrN%2BmCAiQxUvZrxWI6m1SnixKYt%2Bed1K7J6%2FR5V9sRzpaIg1YzhJJHgyTrM0%2Fj%2BggNMK9KlV05KG5NiCdsLT15YR7NWp7BvfyNDRwge";
         window.__genspark_locale = "ja-JP";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDjCz/p1ij+NVXaW+z+EAjNLnMKVMMmITckL04nGgy7ctHABGnE4B48xVy/07d0mNi2VgXJ48uti7r8eoIcqo6j1Q0DHav9jA10hvtcGiZ2PVB0siKMDH4EQ0wZ1DwiYGXEqbU3Sa/wl4ApA1Lr2Bv6CcfwAX2HCfhJP5oojbEsDG6AkFmi4a2nbXNFyEBSOpFC6/XUnTSwbt8dF4catbLbRsBIBQmGN1A3p1FY7irquOWN/RpyZrLI5SwYMUEP8Uj/CreJCsx1g5JiNGFuNnsoiTr21UGwQIVrePCmgNTMOuVtxHEafRHyDhBAjtv1KzkPTTOnWCPunRbfw8bSntPA/TCn+8zj+fC421oD2w+SsLpI0YoKG0qcQgXib0GO/c2dTWfP2eMZbRu0l70VDe37jE38uWghwsbHrxpZcCABtR4f2L2jWtXPKRTRNz7c8x/exeavQXtgC6wPvQO73rSU45jRT4934f5ks+eQoBYmqLdMbJ9hJvfEPPGMqEvnujX9Dp4koi1GZ5xlPjL7cY4jk=";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDnLh/y8VHekknvekxh/sHIg1gn0HNx9FR6PJriGV41PAYYwT/JrTk+rtn1s1HZE8I5yPOS48SzRYTAR4LTFsX/tUhoLvb3VsOFj04eFbfKzHBzeMu97Cpt1xMDaQ7K73hKuIA57zsZM0QxAmnLDEY/4eDkJJ10PMU1k0v0WN6/PeVSRZgUylYpQpkgHMF/BniwGcCGRPPj4UZUC6FU5W68YQCYpl/mX0shInU6YsygE+dKs2Y9MxCJooRWslazdWW6SL1hLhlAQVqPFvBcLt7pDobaLR2/4jDTjTCEoKxlGeT8vNX2505hYyutntdbArYrTcSqyCPg1ddKeRAGEJJ2xOOmXF00r+HDuR6NeTL6Y+TUozjc78AUr06qBHE1OZ4p7IbSj2BbZk1pcbbKybBF1EkXOGivMzzWbpo0Axz9+PnlOqiVaDEcY2cv8shP7g0AznMNrN+mCAiQxUvZrxWI6m1SnixKYt+ed1K7J6/R5V9sRzpaIg1YzhJJHgyTrM0/j+ggNMK9KlV05KG5NiCdsLT15YR7NWp7BvfyNDRwge";
     </script>
     
     <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
