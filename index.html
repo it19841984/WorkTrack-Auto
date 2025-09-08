@@ -173,7 +173,7 @@
                 <h1 class="text-4xl font-bold mb-4">
                     <i class="fas fa-calculator mr-3"></i>勤務実績表自動作成システム
                 </h1>
-                <p class="text-xl opacity-90">ExcelタイムカードのCSVファイルから自動で勤務実績表を作成します</p>
+                <p class="text-xl opacity-90">タイムカードのCSVファイルから自動で勤務実績表を作成します</p>
             </div>
         </div>
 
@@ -456,6 +456,7 @@
                     startTime: '',
                     endTime: '',
                     breakTime: '',
+                    breakDuration: '', // 個別の休憩時間
                     overtime: '',
                     vacation: '',
                     isHolidayWork: false
@@ -896,6 +897,7 @@
                         startTime: cells[3] || '',
                         endTime: cells[4] || '',
                         breakTime: cells[5] || '',
+                        breakDuration: cells[5] || '', // CSVの休憩時間列から個別休憩時間を読み込み
                         overtime: cells[6] || '',
                         vacation: cells[7] || '',
                         isHolidayWork: false
@@ -962,8 +964,15 @@
                     const endMinutes = timeToMinutes(displayEndTime);
                     
                     if (startMinutes !== null && endMinutes !== null && endMinutes > startMinutes) {
-                        // Get break time for this day of week
-                        const breakMinutes = parseInt(daySettings[dayOfWeek]?.breakTime) || 60;
+                        // Get break time - prioritize individual row's breakDuration, fallback to day setting
+                        let breakMinutes = 0;
+                        if (row.breakDuration && row.breakDuration !== '' && row.breakDuration !== '---') {
+                            // Convert break duration from various formats to minutes
+                            breakMinutes = parseBreakDuration(row.breakDuration);
+                        } else {
+                            // Fallback to day setting
+                            breakMinutes = parseInt(daySettings[dayOfWeek]?.breakTime) || 60;
+                        }
                         
                         // Calculate actual work time (total time - break time)
                         const totalMinutes = endMinutes - startMinutes;
@@ -1003,6 +1012,7 @@
                     dayOfWeek: dayOfWeek,
                     startTime: displayStartTime,
                     endTime: displayEndTime,
+                    breakDuration: row.breakDuration || '', // 個別休憩時間を追加
                     actualWorkTime: actualWorkTime,
                     overtimeHours: overtimeHours,
                     overtimeCost: overtimeCost,
@@ -1131,6 +1141,7 @@
                         <th class="px-4 py-3 text-center">休日出勤</th>
                         <th class="px-4 py-3 text-center">出勤時間</th>
                         <th class="px-4 py-3 text-center">退勤時間</th>
+                        <th class="px-4 py-3 text-center">休憩時間</th>
                         <th class="px-4 py-3 text-center">実働時間</th>
                         <th class="px-4 py-3 text-center">残業時間</th>
                         <th class="px-4 py-3 text-center">残業費用</th>
@@ -1169,6 +1180,9 @@
                         </td>
                         <td class="px-4 py-3 text-center">
                             <span class="${endTimeClass}" data-row="${row.index}" data-field="endTime" onclick="editTime(this)" title="クリックして時間を編集">${endTimeText}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="${row.breakDuration ? 'editable-time' : 'editable-time-unset'}" data-row="${row.index}" data-field="breakDuration" onclick="editBreakDuration(this)" title="クリックして休憩時間を編集">${row.breakDuration || '未設定'}</span>
                         </td>
                         <td class="px-4 py-3 text-center">${row.actualWorkTime}</td>
                         <td class="px-4 py-3 text-center">${row.overtimeHours}</td>
@@ -1367,7 +1381,7 @@
             }
 
             // Add headers
-            const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '実働時間', '残業時間', '残業費用'];
+            const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '実働時間', '残業時間', '残業費用'];
             if (isPartTime) {
                 headerRow.push('基本給');
             }
@@ -1382,6 +1396,7 @@
                     row.isHolidayWork ? '○' : '',
                     row.startTime,
                     row.endTime,
+                    row.breakDuration || '',
                     row.actualWorkTime,
                     row.overtimeHours,
                     row.overtimeCost > 0 ? row.overtimeCost : ''
@@ -1446,7 +1461,7 @@
             csvContent += '詳細\n';
             
             // Add headers
-            let headerLine = '日付,曜日,休日出勤,出勤時間,退勤時間,実働時間,残業時間,残業費用';
+            let headerLine = '日付,曜日,休日出勤,出勤時間,退勤時間,休憩時間,実働時間,残業時間,残業費用';
             if (isPartTime) {
                 headerLine += ',基本給';
             }
@@ -1460,6 +1475,7 @@
                     row.isHolidayWork ? '○' : '',
                     row.startTime,
                     row.endTime,
+                    row.breakDuration || '',
                     row.actualWorkTime,
                     row.overtimeHours,
                     row.overtimeCost > 0 ? row.overtimeCost : ''
@@ -1483,6 +1499,163 @@
             document.body.removeChild(link);
             
             showMessage('CSVファイルをエクスポートしました', 'success');
+        }
+
+        // 休憩時間の編集機能
+        function editBreakDuration(element) {
+            const currentValue = element.textContent.trim();
+            const displayValue = currentValue === '未設定' ? '' : currentValue;
+            
+            // Create input for break duration
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = displayValue;
+            input.className = 'time-input';
+            input.placeholder = '例: 60分, 1時間30分';
+            
+            // Add event listeners
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveBreakDurationEdit(element, this.value);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelBreakDurationEdit(element, currentValue);
+                }
+            });
+            
+            input.addEventListener('blur', function(e) {
+                setTimeout(() => {
+                    if (document.contains(this)) {
+                        saveBreakDurationEdit(element, this.value);
+                    }
+                }, 100);
+            });
+            
+            // Replace element content with input
+            element.innerHTML = '';
+            element.appendChild(input);
+            
+            // Focus and select
+            input.focus();
+            input.select();
+        }
+
+        function saveBreakDurationEdit(element, newValue) {
+            const rowIndex = parseInt(element.dataset.row);
+            const field = element.dataset.field;
+            
+            // Validate row index
+            if (rowIndex < 0 || rowIndex >= allPeriodData.length) {
+                showMessage('データの更新に失敗しました: 無効な行インデックス', 'error');
+                cancelBreakDurationEdit(element, element.textContent || '未設定');
+                return;
+            }
+            
+            // Update data
+            if (allPeriodData[rowIndex] !== undefined) {
+                const oldValue = allPeriodData[rowIndex][field];
+                allPeriodData[rowIndex][field] = newValue;
+                
+                // Also update original CSV data if it exists
+                const originalRow = originalCsvData.find(row => 
+                    normalizeDate(row.date) === normalizeDate(allPeriodData[rowIndex].date)
+                );
+                
+                if (originalRow) {
+                    originalRow.breakDuration = newValue;
+                    originalRow.breakTime = newValue; // Keep both for compatibility
+                }
+                
+                // Update csvData to maintain consistency
+                csvData = [...allPeriodData];
+                
+                try {
+                    // Trigger full recalculation
+                    processData();
+                    
+                    // Show confirmation message
+                    const timeDisplay = newValue || '未設定';
+                    showMessage(`✅ ${allPeriodData[rowIndex].date} の休憩時間を「${timeDisplay}」に更新しました`, 'success');
+                    
+                } catch (error) {
+                    // Rollback on error
+                    allPeriodData[rowIndex][field] = oldValue;
+                    if (originalRow) {
+                        originalRow.breakDuration = oldValue;
+                        originalRow.breakTime = oldValue;
+                    }
+                    csvData = [...allPeriodData];
+                    processData();
+                    
+                    showMessage('計算中にエラーが発生しました: ' + error.message, 'error');
+                }
+                
+            } else {
+                showMessage('データの更新に失敗しました: データが見つかりません', 'error');
+                cancelBreakDurationEdit(element, element.textContent || '未設定');
+            }
+        }
+
+        function cancelBreakDurationEdit(element, originalValue) {
+            element.innerHTML = originalValue;
+        }
+
+        // 日付正規化のヘルパー関数
+        function normalizeDate(dateStr) {
+            if (!dateStr) return '';
+            
+            if (dateStr.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                const parts = dateStr.split('/');
+                return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+            } else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                const parts = dateStr.split('/');
+                return parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+            } else if (dateStr.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                const parts = dateStr.split('-');
+                return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+            }
+            return dateStr;
+        }
+
+        // 休憩時間を分に変換する関数
+        function parseBreakDuration(breakStr) {
+            if (!breakStr || breakStr === '' || breakStr === '---') return 0;
+            
+            breakStr = breakStr.toString().toLowerCase();
+            let totalMinutes = 0;
+            
+            // Handle various formats
+            // 例: "60分", "1時間30分", "90", "1.5時間"
+            
+            // 時間と分が含まれている場合 (例: "1時間30分")
+            const hoursAndMinutesMatch = breakStr.match(/(\d+(?:\.\d+)?)\s*時間\s*(\d+)\s*分/);
+            if (hoursAndMinutesMatch) {
+                const hours = parseFloat(hoursAndMinutesMatch[1]);
+                const minutes = parseInt(hoursAndMinutesMatch[2]);
+                return Math.round(hours * 60 + minutes);
+            }
+            
+            // 時間のみ (例: "1時間", "1.5時間")
+            const hoursOnlyMatch = breakStr.match(/(\d+(?:\.\d+)?)\s*時間/);
+            if (hoursOnlyMatch) {
+                const hours = parseFloat(hoursOnlyMatch[1]);
+                return Math.round(hours * 60);
+            }
+            
+            // 分のみ (例: "60分")
+            const minutesOnlyMatch = breakStr.match(/(\d+)\s*分/);
+            if (minutesOnlyMatch) {
+                return parseInt(minutesOnlyMatch[1]);
+            }
+            
+            // 数字のみ（分として扱う）
+            const numberMatch = breakStr.match(/^(\d+(?:\.\d+)?)$/);
+            if (numberMatch) {
+                return Math.round(parseFloat(numberMatch[1]));
+            }
+            
+            return 0;
         }
 
         function showMessage(message, type) {
@@ -1518,12 +1691,3 @@
     </script>
 </body>
 </html>
-    <script id="html_badge_script1">
-        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
-            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDnLh%2Fy8VHekknvekxh%2FsHIg1gn0HNx9FR6PJriGV41PAYYwT%2FJrTk%2Brtn1s1HZE8I5yPOS48SzRYTAR4LTFsX%2FtUhoLvb3VsOFj04eFbfKzHBzeMu97Cpt1xMDaQ7K73hKuIA57zsZM0QxAmnLDEY%2F4eDkJJ10PMU1k0v0WN6%2FPeVSRZgUylYpQpkgHMF%2FBniwGcCGRPPj4UZUC6FU5W68YQCYpl%2FmX0shInU6YsygE%2BdKs2Y9MxCJooRWslazdWW6SL1hLhlAQVqPFvBcLt7pDobaLR2%2F4jDTjTCEoKxlGeT8vNX2505hYyutntdbArYrTcSqyCPg1ddKeRAGEJJ2xOOmXF00r%2BHDuR6NeTL6Y%2BTUozjc78AUr06qBHE1OZ4p7IbSj2BbZk1pcbbKybBF1EkXOGivMzzWbpo0Axz9%2BPnlOqiVaDEcY2cv8shP7g0AznMNrN%2BmCAiQxUvZrxWI6m1SnixKYt%2Bed1K7J6%2FR5V9sRzpaIg1YzhJJHgyTrM0%2Fj%2BggNMK9KlV05KG5NiCdsLT15YR7NWp7BvfyNDRwge";
-        window.__genspark_locale = "ja-JP";
-        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDnLh/y8VHekknvekxh/sHIg1gn0HNx9FR6PJriGV41PAYYwT/JrTk+rtn1s1HZE8I5yPOS48SzRYTAR4LTFsX/tUhoLvb3VsOFj04eFbfKzHBzeMu97Cpt1xMDaQ7K73hKuIA57zsZM0QxAmnLDEY/4eDkJJ10PMU1k0v0WN6/PeVSRZgUylYpQpkgHMF/BniwGcCGRPPj4UZUC6FU5W68YQCYpl/mX0shInU6YsygE+dKs2Y9MxCJooRWslazdWW6SL1hLhlAQVqPFvBcLt7pDobaLR2/4jDTjTCEoKxlGeT8vNX2505hYyutntdbArYrTcSqyCPg1ddKeRAGEJJ2xOOmXF00r+HDuR6NeTL6Y+TUozjc78AUr06qBHE1OZ4p7IbSj2BbZk1pcbbKybBF1EkXOGivMzzWbpo0Axz9+PnlOqiVaDEcY2cv8shP7g0AznMNrN+mCAiQxUvZrxWI6m1SnixKYt+ed1K7J6/R5V9sRzpaIg1YzhJJHgyTrM0/j+ggNMK9KlV05KG5NiCdsLT15YR7NWp7BvfyNDRwge";
-    </script>
-    
-    <script id="html_notice_dialog_script" src="https://www.genspark.ai/notice_dialog.js"></script>
-    
