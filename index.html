@@ -298,12 +298,38 @@
                 <!-- Attendance Correction -->
                 <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                     <h4 class="text-lg font-semibold text-green-800 mb-2 flex items-center">
-                        <i class="fas fa-clock mr-2"></i>出勤時間一括変更
+                        <i class="fas fa-clock mr-2"></i>時刻一括変更
                     </h4>
-                    <p class="text-sm text-green-700 mb-3">指定時間より遅くに出勤した場合は、一括で指定時間に変更します。</p>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-green-700 mb-1">基準時刻</label>
-                        <input type="time" id="correctionTime" value="09:00" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
+                    <p class="text-sm text-green-700 mb-3">基準時刻より早く/遅くに出勤/退勤した場合は、一括で指定した時刻に変更します。</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-green-700 mb-1">対象時刻</label>
+                            <select id="correctionTimeType" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
+                                <option value="startTime">出勤時間</option>
+                                <option value="endTime">退勤時間</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-green-700 mb-1">基準時刻</label>
+                            <input type="time" id="correctionBaseTime" value="09:00" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-green-700 mb-1">変更条件</label>
+                            <select id="correctionCondition" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
+                                <option value="later">より遅い場合</option>
+                                <option value="earlier">より早い場合</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-green-700 mb-1">変更後時刻</label>
+                            <input type="time" id="correctionNewTime" value="09:00" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500">
+                        </div>
+                    </div>
+                    <div class="bg-green-100 border border-green-200 rounded p-2 mb-3">
+                        <p class="text-xs text-green-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            例: 「出勤時間」で基準時刻「09:00」より「遅い場合」を「08:30」に変更
+                        </p>
                     </div>
                     <button onclick="applyCorrectionTime()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
                         <i class="fas fa-edit mr-2"></i>一括変更実行
@@ -776,10 +802,18 @@
         }
 
         function applyCorrectionTime() {
-            const correctionTime = document.getElementById('correctionTime').value;
+            const timeType = document.getElementById('correctionTimeType').value;
+            const baseTime = document.getElementById('correctionBaseTime').value;
+            const newTime = document.getElementById('correctionNewTime').value;
+            const condition = document.getElementById('correctionCondition').value;
             
-            if (!correctionTime) {
+            if (!baseTime) {
                 showMessage('基準時刻を入力してください', 'error');
+                return;
+            }
+
+            if (!newTime) {
+                showMessage('変更後時刻を入力してください', 'error');
                 return;
             }
 
@@ -788,9 +822,16 @@
                 return;
             }
 
-            const correctionMinutes = timeToMinutes(correctionTime);
-            if (correctionMinutes === null) {
-                showMessage('有効な時刻を入力してください', 'error');
+            const baseMinutes = timeToMinutes(baseTime);
+            const newMinutes = timeToMinutes(newTime);
+            
+            if (baseMinutes === null) {
+                showMessage('有効な基準時刻を入力してください', 'error');
+                return;
+            }
+
+            if (newMinutes === null) {
+                showMessage('有効な変更後時刻を入力してください', 'error');
                 return;
             }
 
@@ -799,42 +840,38 @@
 
             // Apply correction to current period data
             allPeriodData.forEach((row, index) => {
-                // More inclusive condition checking
-                if (row.startTime && row.startTime.trim() !== '' && row.startTime !== '---') {
+                // Check the selected time type
+                const targetTime = row[timeType];
+                
+                if (targetTime && targetTime.trim() !== '' && targetTime !== '---') {
                     eligibleRows++;
                     
-                    const startMinutes = timeToMinutes(row.startTime);
-                    if (startMinutes !== null && startMinutes > correctionMinutes) {
-                        const oldTime = row.startTime;
-                        row.startTime = correctionTime;
-                        changedCount++;
+                    const targetMinutes = timeToMinutes(targetTime);
+                    if (targetMinutes !== null) {
+                        let shouldChange = false;
                         
-                        console.log(`Changed row ${index}: ${oldTime} → ${correctionTime}`);
+                        // Check condition: later (遅く) or earlier (早く)
+                        if (condition === 'later' && targetMinutes > baseMinutes) {
+                            shouldChange = true;
+                        } else if (condition === 'earlier' && targetMinutes < baseMinutes) {
+                            shouldChange = true;
+                        }
                         
-                        // Also update original CSV data if it exists
-                        const normalizeDate = (dateStr) => {
-                            if (!dateStr) return '';
+                        if (shouldChange) {
+                            const oldTime = row[timeType];
+                            row[timeType] = newTime;
+                            changedCount++;
                             
-                            // Handle different date formats and normalize to YYYY-MM-DD
-                            if (dateStr.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
-                                const parts = dateStr.split('/');
-                                return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
-                            } else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-                                const parts = dateStr.split('/');
-                                return parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
-                            } else if (dateStr.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
-                                const parts = dateStr.split('-');
-                                return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                            console.log(`Changed row ${index} ${timeType}: ${oldTime} → ${newTime}`);
+                            
+                            // Also update original CSV data if it exists
+                            const originalIndex = originalCsvData.findIndex(orig => 
+                                normalizeDate(orig.date) === normalizeDate(row.date)
+                            );
+                            
+                            if (originalIndex !== -1) {
+                                originalCsvData[originalIndex][timeType] = newTime;
                             }
-                            return dateStr;
-                        };
-                        
-                        const originalIndex = originalCsvData.findIndex(orig => 
-                            normalizeDate(orig.date) === normalizeDate(row.date)
-                        );
-                        
-                        if (originalIndex !== -1) {
-                            originalCsvData[originalIndex].startTime = correctionTime;
                         }
                     }
                 }
@@ -849,12 +886,17 @@
                 // Trigger recalculation
                 processData();
                 
-                showMessage(`${changedCount}件の出勤時間を${correctionTime}に変更しました`, 'success');
+                const timeTypeName = timeType === 'startTime' ? '出勤時間' : '退勤時間';
+                const conditionText = condition === 'later' ? 'より遅い' : 'より早い';
+                showMessage(`${changedCount}件の${timeTypeName}を${newTime}に変更しました（基準時刻${baseTime}${conditionText}時刻）`, 'success');
             } else {
                 if (eligibleRows === 0) {
-                    showMessage('出勤時間が入力されているデータがありません', 'error');
+                    const timeTypeName = timeType === 'startTime' ? '出勤時間' : '退勤時間';
+                    showMessage(`${timeTypeName}が入力されているデータがありません`, 'error');
                 } else {
-                    showMessage(`基準時刻${correctionTime}より遅い出勤時間がありませんでした`, 'error');
+                    const timeTypeName = timeType === 'startTime' ? '出勤時間' : '退勤時間';
+                    const conditionText = condition === 'later' ? 'より遅い' : 'より早い';
+                    showMessage(`基準時刻${baseTime}${conditionText}${timeTypeName}がありませんでした`, 'error');
                 }
             }
         }
