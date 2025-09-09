@@ -182,12 +182,12 @@
             <!-- Timecard CSV Upload -->
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-file-csv mr-3 text-blue-600"></i>タイムカードCSVインポート
+                    <i class="fas fa-file-csv mr-3 text-blue-600"></i>タイムカードインポート
                 </h3>
                 <div id="uploadArea" class="border-3 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-all hover:border-blue-400 hover:bg-blue-50">
                     <i class="fas fa-file-upload text-4xl text-gray-400 mb-3"></i>
-                    <p class="text-lg text-gray-600 mb-3">CSVファイルをドラッグ&ドロップ<br>またはクリックして選択</p>
-                    <input type="file" id="fileInput" accept=".csv" class="hidden">
+                    <p class="text-lg text-gray-600 mb-3">Excel/CSVファイルをドラッグ&ドロップ</p>
+                    <input type="file" id="fileInput" accept=".csv,.xlsx" class="hidden">
                     <div class="flex justify-center gap-3">
                         <button onclick="document.getElementById('fileInput').click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
                             <i class="fas fa-folder-open mr-2"></i>ファイル選択
@@ -201,8 +201,10 @@
 
             <!-- Work Report Import -->
             <div class="bg-white rounded-xl shadow-lg p-6">
-                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-file-import mr-3 text-indigo-600"></i>過去の勤務実績表インポート
+                <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center flex-wrap">
+                    <i class="fas fa-file-import mr-3 text-indigo-600"></i>
+                    <span>過去の勤務実績表インポート</span>
+                    <span class="text-sm text-gray-500 font-normal ml-2">（従業員基本設定、曜日別詳細設定のデータが自動反映されます）</span>
                 </h3>
                 <div id="workReportUploadArea" class="border-3 border-dashed border-indigo-300 rounded-lg p-8 text-center cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50">
                     <i class="fas fa-file-excel text-4xl text-indigo-400 mb-3"></i>
@@ -1397,34 +1399,57 @@
         }
 
         function handleFile(file) {
-            if (!file.name.toLowerCase().endsWith('.csv')) {
-                showMessage('CSVファイルを選択してください', 'error');
+            const fileName = file.name.toLowerCase();
+            
+            if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
+                showMessage('CSV または Excel ファイルを選択してください', 'error');
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    parseCSV(e.target.result);
-                } catch (error) {
-                    // If Shift_JIS fails, try UTF-8
-                    if (error.message.includes('有効なデータが見つかりません')) {
-                        console.log('Shift_JISでの読み込みに失敗、UTF-8で再試行します');
-                        const utf8Reader = new FileReader();
-                        utf8Reader.onload = function(e2) {
-                            try {
-                                parseCSV(e2.target.result);
-                            } catch (error2) {
-                                showMessage('ファイルの読み込みに失敗しました（Shift_JISとUTF-8の両方で試行）: ' + error2.message, 'error');
-                            }
-                        };
-                        utf8Reader.readAsText(file, 'UTF-8');
-                    } else {
-                        showMessage('ファイルの読み込みに失敗しました: ' + error.message, 'error');
+            if (fileName.endsWith('.xlsx')) {
+                // Handle Excel file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const csvData = XLSX.utils.sheet_to_csv(worksheet);
+                        
+                        parseCSV(csvData);
+                        
+                    } catch (error) {
+                        showMessage('Excelファイルの読み込みに失敗しました: ' + error.message, 'error');
                     }
-                }
-            };
-            reader.readAsText(file, 'Shift_JIS');
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                // Handle CSV file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        parseCSV(e.target.result);
+                    } catch (error) {
+                        // If Shift_JIS fails, try UTF-8
+                        if (error.message.includes('有効なデータが見つかりません')) {
+                            console.log('Shift_JISでの読み込みに失敗、UTF-8で再試行します');
+                            const utf8Reader = new FileReader();
+                            utf8Reader.onload = function(e2) {
+                                try {
+                                    parseCSV(e2.target.result);
+                                } catch (error2) {
+                                    showMessage('ファイルの読み込みに失敗しました（Shift_JISとUTF-8の両方で試行）: ' + error2.message, 'error');
+                                }
+                            };
+                            utf8Reader.readAsText(file, 'UTF-8');
+                        } else {
+                            showMessage('ファイルの読み込みに失敗しました: ' + error.message, 'error');
+                        }
+                    }
+                };
+                reader.readAsText(file, 'Shift_JIS');
+            }
         }
 
         function parseCSV(text) {
