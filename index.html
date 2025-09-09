@@ -173,7 +173,7 @@
                 <h1 class="text-4xl font-bold mb-4">
                     <i class="fas fa-calculator mr-3"></i>勤務実績表自動作成システム
                 </h1>
-                <p class="text-xl opacity-90">タイムカードから自動で勤務実績表を作成します</p>
+                <p class="text-xl opacity-90">タイムカードのCSVファイルから自動で勤務実績表を作成します</p>
             </div>
         </div>
 
@@ -182,11 +182,11 @@
             <!-- Timecard CSV Upload -->
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-file-csv mr-3 text-blue-600"></i>タイムカードをインポート
+                    <i class="fas fa-file-csv mr-3 text-blue-600"></i>タイムカードCSVインポート
                 </h3>
                 <div id="uploadArea" class="border-3 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-all hover:border-blue-400 hover:bg-blue-50">
                     <i class="fas fa-file-upload text-4xl text-gray-400 mb-3"></i>
-                    <p class="text-lg text-gray-600 mb-3">Excel/CSVファイルを<br>ドラッグ&ドロップまたは選択</p>
+                    <p class="text-lg text-gray-600 mb-3">CSVファイルをドラッグ&ドロップ<br>またはクリックして選択</p>
                     <input type="file" id="fileInput" accept=".csv" class="hidden">
                     <div class="flex justify-center gap-3">
                         <button onclick="document.getElementById('fileInput').click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
@@ -202,11 +202,11 @@
             <!-- Work Report Import -->
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <i class="fas fa-file-import mr-3 text-indigo-600"></i>過去の勤務実績表をインポート（従業員基本設定、曜日別詳細設定のデータが自動反映されます）
+                    <i class="fas fa-file-import mr-3 text-indigo-600"></i>過去の勤務実績表インポート
                 </h3>
                 <div id="workReportUploadArea" class="border-3 border-dashed border-indigo-300 rounded-lg p-8 text-center cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50">
                     <i class="fas fa-file-excel text-4xl text-indigo-400 mb-3"></i>
-                    <p class="text-lg text-gray-600 mb-3">Excel/CSVファイルを<br>ドラッグ&ドロップまたは選択</p>
+                    <p class="text-lg text-gray-600 mb-3">Excel/CSVファイルを<br>ドラッグ&ドロップまたはクリック</p>
                     <input type="file" id="workReportFileInput" accept=".csv,.xlsx" class="hidden">
                     <div class="flex justify-center gap-3">
                         <button onclick="document.getElementById('workReportFileInput').click()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm">
