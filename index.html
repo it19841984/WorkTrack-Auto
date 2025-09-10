@@ -173,7 +173,7 @@
                 <h1 class="text-4xl font-bold mb-4">
                     <i class="fas fa-calculator mr-3"></i>勤務実績表自動作成システム
                 </h1>
-                <p class="text-xl opacity-90">タイムカードから自動で勤務実績表を作成します</p>
+                <p class="text-xl opacity-90">タイムカードのCSVファイルから自動で勤務実績表を作成します</p>
             </div>
         </div>
 
@@ -208,7 +208,7 @@
                 </h3>
                 <div id="workReportUploadArea" class="border-3 border-dashed border-indigo-300 rounded-lg p-8 text-center cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50">
                     <i class="fas fa-file-excel text-4xl text-indigo-400 mb-3"></i>
-                    <p class="text-lg text-gray-600 mb-3">Excel/CSVファイルをドラッグ&ドロップ</p>
+                    <p class="text-lg text-gray-600 mb-3">Excel/CSVファイルを<br>ドラッグ&ドロップまたはクリック</p>
                     <input type="file" id="workReportFileInput" accept=".csv,.xlsx" class="hidden">
                     <div class="flex justify-center gap-3">
                         <button onclick="document.getElementById('workReportFileInput').click()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm">
@@ -272,19 +272,103 @@
                         </select>
                     </div>
                     
-                    <!-- Wage Settings -->
-                    <div id="wageContainer" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <h4 class="text-lg font-semibold text-yellow-800 mb-3 flex items-center">
-                            <i class="fas fa-yen-sign mr-2"></i>時給設定
+                    <!-- Fulltime Wage Settings -->
+                    <div id="fulltimeWageContainer" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                            <i class="fas fa-briefcase mr-2"></i>常勤給与設定
                         </h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-yellow-800 mb-2">通常時給 (円/時)</label>
-                                <input type="number" id="regularHourlyWage" value="1000" min="0" placeholder="1000" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                <label class="block text-sm font-medium text-blue-800 mb-2">基本給 (円/月)</label>
+                                <input type="number" id="baseSalary" value="200000" min="0" placeholder="200000" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             </div>
+                            
+                            <!-- Commuting Allowance -->
                             <div>
-                                <label class="block text-sm font-medium text-yellow-800 mb-2">残業時給 (円/時)</label>
-                                <input type="number" id="overtimeHourlyWage" value="1250" min="0" placeholder="1250" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                <label class="block text-sm font-medium text-blue-800 mb-2">通勤手当 (円)</label>
+                                <input type="number" id="fulltimeCommutingAllowance" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <!-- Multiple Adjustment Allowances Section -->
+                            <div class="allowances-section">
+                                <div class="flex items-center justify-between mb-3">
+                                    <label class="text-sm font-medium text-blue-800">調整手当</label>
+                                    <button type="button" onclick="addFulltimeAllowance()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                                        <i class="fas fa-plus mr-1"></i>調整手当追加
+                                    </button>
+                                </div>
+                                <div id="fulltimeAllowancesList" class="space-y-2">
+                                    <!-- Initial allowance row -->
+                                    <div class="allowance-row grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                                        <div>
+                                            <input type="text" placeholder="役職手当" onchange="recalculateIfNeeded()" class="allowance-name w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                        </div>
+                                        <div>
+                                            <input type="number" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="allowance-amount w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                        </div>
+                                        <div>
+                                            <button type="button" onclick="removeFulltimeAllowance(this)" class="bg-red-500 text-white px-2 py-2 rounded text-sm hover:bg-red-600 transition-colors w-full" style="display: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-blue-800 mb-2">残業時給 (円/時)</label>
+                                <input type="number" id="fulltimeOvertimeHourlyWage" value="1500" min="0" placeholder="1500" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Parttime Wage Settings -->
+                    <div id="parttimeWageContainer" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4" style="display: none;">
+                        <h4 class="text-lg font-semibold text-yellow-800 mb-3 flex items-center">
+                            <i class="fas fa-clock mr-2"></i>パート給与設定
+                        </h4>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-yellow-800 mb-2">時給 (円/時)</label>
+                                    <input type="number" id="regularHourlyWage" value="1000" min="0" placeholder="1000" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-yellow-800 mb-2">残業時給 (円/時)</label>
+                                    <input type="number" id="overtimeHourlyWage" value="1250" min="0" placeholder="1250" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                </div>
+                            </div>
+                            
+                            <!-- Commuting Allowance -->
+                            <div>
+                                <label class="block text-sm font-medium text-yellow-800 mb-2">通勤手当（1日あたり） (円)</label>
+                                <input type="number" id="parttimeCommutingAllowance" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                            </div>
+                            
+                            <!-- Multiple Adjustment Allowances Section -->
+                            <div class="allowances-section">
+                                <div class="flex items-center justify-between mb-3">
+                                    <label class="text-sm font-medium text-yellow-800">調整手当</label>
+                                    <button type="button" onclick="addParttimeAllowance()" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
+                                        <i class="fas fa-plus mr-1"></i>調整手当追加
+                                    </button>
+                                </div>
+                                <div id="parttimeAllowancesList" class="space-y-2">
+                                    <!-- Initial allowance row -->
+                                    <div class="allowance-row grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                                        <div>
+                                            <input type="text" placeholder="役職手当" onchange="recalculateIfNeeded()" class="allowance-name w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm">
+                                        </div>
+                                        <div>
+                                            <input type="number" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="allowance-amount w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm">
+                                        </div>
+                                        <div>
+                                            <button type="button" onclick="removeParttimeAllowance(this)" class="bg-red-500 text-white px-2 py-2 rounded text-sm hover:bg-red-600 transition-colors w-full" style="display: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -309,6 +393,7 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
 
@@ -772,6 +857,8 @@
 
         // Settings Export/Import Functions
         function exportSettings() {
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            
             const settings = {
                 bulkSettings: {
                     overtimeStart: document.getElementById('bulkOvertimeStart').value,
@@ -782,6 +869,24 @@
                 periodSettings: {
                     startDate: document.getElementById('periodStartDate').value,
                     endDate: document.getElementById('periodEndDate').value
+                },
+                employeeSettings: {
+                    name: document.getElementById('employeeName').value,
+                    targetMonth: document.getElementById('targetMonth').value,
+                    employmentType: document.getElementById('employmentType').value,
+                    totalPaidLeaveDays: document.getElementById('totalPaidLeaveDays').value,
+                    usedPaidLeaveDays: document.getElementById('usedPaidLeaveDays').value,
+                    wageSettings: isPartTime ? {
+                        regularHourlyWage: document.getElementById('regularHourlyWage').value,
+                        overtimeHourlyWage: document.getElementById('overtimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('parttime')
+                    } : {
+                        baseSalary: document.getElementById('baseSalary').value,
+                        overtimeHourlyWage: document.getElementById('fulltimeOvertimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('fulltime')
+                    }
                 }
             };
 
@@ -857,6 +962,68 @@
                             if (rateInput) rateInput.value = daySettings[day].overtimeRate;
                         }
                     });
+
+                    // Apply employee settings if available
+                    if (settings.employeeSettings) {
+                        const empSettings = settings.employeeSettings;
+                        
+                        // Apply basic employee information
+                        if (empSettings.name) {
+                            document.getElementById('employeeName').value = empSettings.name;
+                        }
+                        if (empSettings.targetMonth) {
+                            document.getElementById('targetMonth').value = empSettings.targetMonth;
+                        }
+                        if (empSettings.employmentType) {
+                            document.getElementById('employmentType').value = empSettings.employmentType;
+                            // Trigger employment type change to show/hide appropriate sections
+                            document.getElementById('employmentType').dispatchEvent(new Event('change'));
+                        }
+                        if (empSettings.totalPaidLeaveDays) {
+                            document.getElementById('totalPaidLeaveDays').value = empSettings.totalPaidLeaveDays;
+                        }
+                        if (empSettings.usedPaidLeaveDays) {
+                            document.getElementById('usedPaidLeaveDays').value = empSettings.usedPaidLeaveDays;
+                        }
+                        
+                        // Apply wage settings based on employment type
+                        if (empSettings.wageSettings) {
+                            const isPartTime = empSettings.employmentType === 'parttime';
+                            
+                            if (isPartTime) {
+                                // Apply part-time wage settings
+                                if (empSettings.wageSettings.regularHourlyWage) {
+                                    document.getElementById('regularHourlyWage').value = empSettings.wageSettings.regularHourlyWage;
+                                }
+                                if (empSettings.wageSettings.overtimeHourlyWage) {
+                                    document.getElementById('overtimeHourlyWage').value = empSettings.wageSettings.overtimeHourlyWage;
+                                }
+                                if (empSettings.wageSettings.commutingAllowance) {
+                                    document.getElementById('parttimeCommutingAllowance').value = empSettings.wageSettings.commutingAllowance;
+                                }
+                                if (empSettings.wageSettings.adjustmentAllowances) {
+                                    setAllowancesData('parttime', empSettings.wageSettings.adjustmentAllowances);
+                                }
+                            } else {
+                                // Apply full-time wage settings
+                                if (empSettings.wageSettings.baseSalary) {
+                                    document.getElementById('baseSalary').value = empSettings.wageSettings.baseSalary;
+                                }
+                                if (empSettings.wageSettings.overtimeHourlyWage) {
+                                    document.getElementById('fulltimeOvertimeHourlyWage').value = empSettings.wageSettings.overtimeHourlyWage;
+                                }
+                                if (empSettings.wageSettings.commutingAllowance) {
+                                    document.getElementById('fulltimeCommutingAllowance').value = empSettings.wageSettings.commutingAllowance;
+                                }
+                                if (empSettings.wageSettings.adjustmentAllowances) {
+                                    setAllowancesData('fulltime', empSettings.wageSettings.adjustmentAllowances);
+                                }
+                            }
+                        }
+                        
+                        // Update remaining paid leave calculation
+                        calculateRemainingPaidLeave();
+                    }
 
                     // Regenerate period and merge if needed
                     generatePeriodAndMergeData();
@@ -987,6 +1154,7 @@
                                     toggleHourlyWage();
                                     break;
                                 case '通常時給':
+                                case '時給':
                                     const regularWage = value.replace(/[円\/時]/g, '').trim();
                                     if (regularWage) {
                                         document.getElementById('regularHourlyWage').value = regularWage;
@@ -994,8 +1162,45 @@
                                     break;
                                 case '残業時給':
                                     const overtimeWage = value.replace(/[円\/時]/g, '').trim();
+                                    const currentEmploymentType = document.getElementById('employmentType').value;
                                     if (overtimeWage) {
-                                        document.getElementById('overtimeHourlyWage').value = overtimeWage;
+                                        if (currentEmploymentType === 'parttime') {
+                                            document.getElementById('overtimeHourlyWage').value = overtimeWage;
+                                        } else {
+                                            document.getElementById('fulltimeOvertimeHourlyWage').value = overtimeWage;
+                                        }
+                                    }
+                                    break;
+                                case '基本給':
+                                    const baseSalary = value.replace(/[円\/月]/g, '').trim();
+                                    if (baseSalary) {
+                                        document.getElementById('baseSalary').value = baseSalary;
+                                    }
+                                    break;
+                                case '通勤手当':
+                                    const commutingAllowance = value.replace(/円/g, '').trim();
+                                    const empTypeForCommuting = document.getElementById('employmentType').value;
+                                    if (commutingAllowance) {
+                                        if (empTypeForCommuting === 'parttime') {
+                                            document.getElementById('parttimeCommutingAllowance').value = commutingAllowance;
+                                        } else {
+                                            document.getElementById('fulltimeCommutingAllowance').value = commutingAllowance;
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    // Handle multiple adjustment allowances (調整手当1名, 調整手当1額, etc.)
+                                    if (key.match(/^調整手当(\d+)名$/)) {
+                                        const empTypeForAllowance = document.getElementById('employmentType').value;
+                                        const allowanceIndex = parseInt(key.match(/^調整手当(\d+)名$/)[1]) - 1;
+                                        setAllowanceName(empTypeForAllowance, allowanceIndex, value);
+                                    } else if (key.match(/^調整手当(\d+)額$/)) {
+                                        const allowanceAmount = value.replace(/円/g, '').trim();
+                                        const empTypeForAmount = document.getElementById('employmentType').value;
+                                        const allowanceIndex = parseInt(key.match(/^調整手当(\d+)額$/)[1]) - 1;
+                                        if (allowanceAmount) {
+                                            setAllowanceAmount(empTypeForAmount, allowanceIndex, allowanceAmount);
+                                        }
                                     }
                                     break;
                                 case '有給日数':
@@ -1118,14 +1323,36 @@
                 // Get employee basic settings
                 const employeeName = document.getElementById('employeeName').value || '従業員';
                 const employmentType = document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤';
-                const regularWage = document.getElementById('regularHourlyWage').value;
-                const overtimeWage = document.getElementById('overtimeHourlyWage').value;
+                const isPartTime = document.getElementById('employmentType').value === 'parttime';
+                const regularWage = isPartTime ? document.getElementById('regularHourlyWage').value : document.getElementById('baseSalary').value;
+                const overtimeWage = isPartTime ? document.getElementById('overtimeHourlyWage').value : document.getElementById('fulltimeOvertimeHourlyWage').value;
                 const totalPaidLeave = document.getElementById('totalPaidLeaveDays').value;
                 const usedPaidLeave = document.getElementById('usedPaidLeaveDays').value;
                 const remainingPaidLeave = document.getElementById('remainingPaidLeaveDays').value;
                 const startDate = document.getElementById('periodStartDate').value;
                 const endDate = document.getElementById('periodEndDate').value;
-                const isPartTime = document.getElementById('employmentType').value === 'parttime';
+
+                // Get wage and allowance settings based on employment type
+                let wageSettings = {};
+                try {
+                    if (isPartTime) {
+                        wageSettings = {
+                            regularWage: regularWage,
+                            overtimeWage: overtimeWage,
+                            commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                            adjustmentAllowances: getAllowancesData('parttime') || []
+                        };
+                    } else {
+                        wageSettings = {
+                            baseSalary: regularWage,
+                            overtimeWage: overtimeWage,
+                            commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                            adjustmentAllowances: getAllowancesData('fulltime') || []
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error getting wage settings:', error);
+                }
 
                 // Create worksheet data with employee basic settings
                 const worksheetData = [
@@ -1135,16 +1362,51 @@
                     ['氏名', employeeName],
                     ['対象月', targetMonth],
                     ['対象期間', `${startDate} ～ ${endDate}`],
-                    ['勤務形態', employmentType],
-                    ['通常時給', regularWage + '円/時'],
-                    ['残業時給', overtimeWage + '円/時'],
+                    ['勤務形態', employmentType]
+                ];
+                
+                // Add wage settings based on employment type
+                if (isPartTime) {
+                    worksheetData.push(
+                        ['時給', wageSettings.regularWage + '円/時'],
+                        ['残業時給', wageSettings.overtimeWage + '円/時'],
+                        ['通勤手当', wageSettings.commutingAllowance + '円']
+                    );
+                    // Add multiple adjustment allowances
+                    wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                        if (allowance.name || allowance.amount > 0) {
+                            worksheetData.push(
+                                [`調整手当${index + 1}名`, allowance.name],
+                                [`調整手当${index + 1}額`, allowance.amount + '円']
+                            );
+                        }
+                    });
+                } else {
+                    worksheetData.push(
+                        ['基本給', wageSettings.baseSalary + '円/月'],
+                        ['残業時給', wageSettings.overtimeWage + '円/時'],
+                        ['通勤手当', wageSettings.commutingAllowance + '円']
+                    );
+                    // Add multiple adjustment allowances
+                    wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                        if (allowance.name || allowance.amount > 0) {
+                            worksheetData.push(
+                                [`調整手当${index + 1}名`, allowance.name],
+                                [`調整手当${index + 1}額`, allowance.amount + '円']
+                            );
+                        }
+                    });
+                }
+                
+                // Add paid leave settings
+                worksheetData.push(
                     ['有給日数', totalPaidLeave + '日'],
                     ['今年度有給取得日', usedPaidLeave + '日'],
                     ['残り有給日数', remainingPaidLeave + '日'],
                     [''],
                     ['=== 曜日別詳細設定 ==='],
                     ['曜日', '残業開始時間', '休憩時間(分)', '残業単価(円/時)']
-                ];
+                );
 
                 // Add day settings data
                 const days = ['月', '火', '水', '木', '金', '土', '日'];
@@ -1169,11 +1431,79 @@
                 );
 
                 if (isPartTime) {
-                    worksheetData.push(
-                        ['総実働時間', minutesToTime(summaryData.totalWorkMinutes)],
-                        ['総支給額', '¥' + summaryData.totalSalary.toLocaleString()]
-                    );
+                    worksheetData.push(['総実働時間', minutesToTime(summaryData.totalWorkMinutes)]);
                 }
+                
+                // Add taxable/non-taxable breakdown
+                worksheetData.push(
+                    [''],
+                    ['課税対象支給額', '¥' + summaryData.taxableAmount.toLocaleString()],
+                    ['非課税支給額', '¥' + summaryData.nonTaxableAmount.toLocaleString()],
+                    ['総支給額', '¥' + summaryData.totalSalary.toLocaleString()]
+                );
+
+                // Add detailed salary calculation formula
+                worksheetData.push(
+                    [''],
+                    ['=== 総支給額計算式 ===']
+                );
+                
+                // Add calculation details based on employment type
+                if (isPartTime) {
+                    const regularHourlyWage = parseInt(wageSettings.regularWage) || 1000;
+                    const overtimeHourlyWage = parseInt(wageSettings.overtimeWage) || 1250;
+                    const allowancesData = wageSettings.adjustmentAllowances;
+                    const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
+                    const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                    
+                    worksheetData.push(['【課税対象支給額】']);
+                    worksheetData.push(['基本給', `${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}`]);
+                    worksheetData.push(['残業代', `${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}`]);
+                    
+                    if (allowancesData.length > 0) {
+                        allowancesData.forEach(allowance => {
+                            if (allowance.name || allowance.amount > 0) {
+                                const displayName = allowance.name || '調整手当';
+                                worksheetData.push([displayName, `¥${allowance.amount.toLocaleString()}`]);
+                            }
+                        });
+                    }
+                    
+                    worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
+                    worksheetData.push(['']);
+                    worksheetData.push(['【非課税支給額】']);
+                    worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                } else {
+                    const monthlyBaseSalary = parseInt(wageSettings.baseSalary) || 200000;
+                    const overtimeHourlyWage = parseInt(wageSettings.overtimeWage) || 1500;
+                    const allowancesData = wageSettings.adjustmentAllowances;
+                    const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                    
+                    worksheetData.push(['【課税対象支給額】']);
+                    worksheetData.push(['基本給', `¥${monthlyBaseSalary.toLocaleString()}`]);
+                    worksheetData.push(['残業代', `${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}`]);
+                    
+                    if (allowancesData.length > 0) {
+                        allowancesData.forEach(allowance => {
+                            if (allowance.name || allowance.amount > 0) {
+                                const displayName = allowance.name || '調整手当';
+                                worksheetData.push([displayName, `¥${allowance.amount.toLocaleString()}`]);
+                            }
+                        });
+                    }
+                    
+                    worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
+                    worksheetData.push(['']);
+                    worksheetData.push(['【非課税支給額】']);
+                    worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                }
+                
+                worksheetData.push(
+                    [''],
+                    ['総支給額', `¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}`]
+                );
 
                 // Add headers
                 const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '実働時間', '残業時間', '残業費用'];
@@ -1241,10 +1571,16 @@
 
         function toggleHourlyWage() {
             const employmentType = document.getElementById('employmentType').value;
-            const wageContainer = document.getElementById('wageContainer');
+            const fulltimeContainer = document.getElementById('fulltimeWageContainer');
+            const parttimeContainer = document.getElementById('parttimeWageContainer');
             
-            // 時給設定は常に表示（常勤でも残業代計算で使用）
-            // パートタイムの場合は基本給計算にも使用
+            if (employmentType === 'fulltime') {
+                fulltimeContainer.style.display = 'block';
+                parttimeContainer.style.display = 'none';
+            } else {
+                fulltimeContainer.style.display = 'none';
+                parttimeContainer.style.display = 'block';
+            }
             
             if (processedData.length > 0) {
                 processData();
@@ -1260,7 +1596,7 @@
         }
 
         function recalculateIfNeeded() {
-            if (processedData.length > 0 && document.getElementById('employmentType').value === 'parttime') {
+            if (processedData.length > 0) {
                 processData();
             }
         }
@@ -1705,8 +2041,20 @@
             let totalBasicSalary = 0;
 
             const isPartTime = document.getElementById('employmentType').value === 'parttime';
-            const regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
-            const overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+            
+            // Get wage settings based on employment type
+            let regularHourlyWage, overtimeHourlyWage, monthlyBaseSalary, commutingAllowance, adjustmentAllowancesTotal;
+            if (isPartTime) {
+                regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
+                overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+                commutingAllowance = parseInt(document.getElementById('parttimeCommutingAllowance').value) || 0;
+                adjustmentAllowancesTotal = getAllowancesTotal('parttime');
+            } else {
+                monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
+                overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
+                commutingAllowance = parseInt(document.getElementById('fulltimeCommutingAllowance').value) || 0;
+                adjustmentAllowancesTotal = getAllowancesTotal('fulltime');
+            }
 
             allPeriodData.forEach((row, index) => {
                 if (!row.date) return;
@@ -1793,14 +2141,37 @@
                 });
             });
 
+            // Calculate taxable and non-taxable amounts separately
+            let nonTaxableAmount; // 非課税支給額（通勤手当のみ）
+            if (isPartTime) {
+                // パートの場合：通勤手当（1日あたり）× 出勤日数
+                nonTaxableAmount = commutingAllowance * workDays;
+            } else {
+                // 常勤の場合：通勤手当（月額）
+                nonTaxableAmount = commutingAllowance;
+            }
+            let taxableAmount; // 課税対象支給額
+            
+            if (isPartTime) {
+                taxableAmount = totalBasicSalary + totalOvertimeCost + adjustmentAllowancesTotal;
+            } else {
+                taxableAmount = monthlyBaseSalary + totalOvertimeCost + adjustmentAllowancesTotal;
+            }
+            
+            const finalTotalSalary = taxableAmount + nonTaxableAmount; // 総支給額
+
             summaryData = {
                 workDays: workDays,
                 holidayWorkDays: holidayWorkDays,
                 totalOvertimeMinutes: totalOvertimeMinutes,
                 totalOvertimeCost: totalOvertimeCost,
                 totalWorkMinutes: totalWorkMinutes,
-                totalBasicSalary: totalBasicSalary,
-                totalSalary: totalBasicSalary + totalOvertimeCost
+                totalBasicSalary: isPartTime ? totalBasicSalary : monthlyBaseSalary,
+                commutingAllowance: commutingAllowance,
+                adjustmentAllowancesTotal: adjustmentAllowancesTotal,
+                taxableAmount: taxableAmount,        // 課税対象支給額
+                nonTaxableAmount: nonTaxableAmount,  // 非課税支給額
+                totalSalary: finalTotalSalary        // 総支給額
             };
 
             updateSummary();
@@ -1861,12 +2232,24 @@
                         <h4 class="text-sm opacity-80 mb-2">総実働時間</h4>
                         <div class="text-2xl font-bold">${minutesToTime(summaryData.totalWorkMinutes)}</div>
                     </div>
-                    <div class="summary-card part-time-card">
-                        <h4 class="text-sm opacity-80 mb-2">総支給額</h4>
-                        <div class="text-2xl font-bold">¥${summaryData.totalSalary.toLocaleString()}</div>
-                    </div>
                 `;
             }
+            
+            // Add taxable, non-taxable, and total salary cards
+            summaryHTML += `
+                <div class="summary-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                    <h4 class="text-sm opacity-80 mb-2">課税対象支給額</h4>
+                    <div class="text-2xl font-bold">¥${summaryData.taxableAmount.toLocaleString()}</div>
+                </div>
+                <div class="summary-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <h4 class="text-sm opacity-80 mb-2">非課税支給額</h4>
+                    <div class="text-2xl font-bold">¥${summaryData.nonTaxableAmount.toLocaleString()}</div>
+                </div>
+                <div class="summary-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                    <h4 class="text-sm opacity-80 mb-2">総支給額</h4>
+                    <div class="text-2xl font-bold">¥${summaryData.totalSalary.toLocaleString()}</div>
+                </div>
+            `;
 
             container.innerHTML = summaryHTML;
         }
@@ -1875,25 +2258,88 @@
             const container = document.getElementById('calculationFormula');
             const isPartTime = document.getElementById('employmentType').value === 'parttime';
             
-            if (isPartTime && summaryData.totalWorkMinutes > 0) {
-                const regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
-                const overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
-                const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
-                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+            if (summaryData.totalWorkMinutes > 0 || summaryData.totalBasicSalary > 0) {
+                let formulaContent = '';
+                
+                if (isPartTime) {
+                    const regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
+                    const overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+                    const allowancesData = getAllowancesData('parttime');
+                    const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
+                    const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                    
+                    let taxableDisplay = '';
+                    taxableDisplay += `<div class="text-indigo-600 font-semibold">【課税対象支給額】</div>`;
+                    taxableDisplay += `<div>基本給 = ${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}</div>`;
+                    taxableDisplay += `<div>残業代 = ${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}</div>`;
+                    
+                    if (allowancesData.length > 0) {
+                        allowancesData.forEach(allowance => {
+                            if (allowance.name || allowance.amount > 0) {
+                                const displayName = allowance.name || '調整手当';
+                                taxableDisplay += `<div>${displayName} = ¥${allowance.amount.toLocaleString()}</div>`;
+                            }
+                        });
+                    }
+                    
+                    let nonTaxableDisplay = '';
+                    nonTaxableDisplay += `<div class="text-emerald-600 font-semibold mt-2">【非課税支給額】</div>`;
+                    nonTaxableDisplay += `<div>通勤手当合計 = ¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>`;
+                    
+                    formulaContent = `
+                        <div class="space-y-2 font-mono text-sm">
+                            ${taxableDisplay}
+                            <div class="text-indigo-600 font-semibold">課税対象支給額計 = ¥${summaryData.taxableAmount.toLocaleString()}</div>
+                            ${nonTaxableDisplay}
+                            <div class="text-emerald-600 font-semibold">非課税支給額計 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>
+                            <div class="border-t border-white/30 pt-2 font-bold text-lg text-purple-600">
+                                総支給額 = ¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
+                    const overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
+                    const allowancesData = getAllowancesData('fulltime');
+                    const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                    
+                    let taxableDisplay = '';
+                    taxableDisplay += `<div class="text-indigo-600 font-semibold">【課税対象支給額】</div>`;
+                    taxableDisplay += `<div>基本給 = ¥${monthlyBaseSalary.toLocaleString()}</div>`;
+                    taxableDisplay += `<div>残業代 = ${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}</div>`;
+                    
+                    if (allowancesData.length > 0) {
+                        allowancesData.forEach(allowance => {
+                            if (allowance.name || allowance.amount > 0) {
+                                const displayName = allowance.name || '調整手当';
+                                taxableDisplay += `<div>${displayName} = ¥${allowance.amount.toLocaleString()}</div>`;
+                            }
+                        });
+                    }
+                    
+                    let nonTaxableDisplay = '';
+                    nonTaxableDisplay += `<div class="text-emerald-600 font-semibold mt-2">【非課税支給額】</div>`;
+                    nonTaxableDisplay += `<div>通勤手当合計 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>`;
+                    
+                    formulaContent = `
+                        <div class="space-y-2 font-mono text-sm">
+                            ${taxableDisplay}
+                            <div class="text-indigo-600 font-semibold">課税対象支給額計 = ¥${summaryData.taxableAmount.toLocaleString()}</div>
+                            ${nonTaxableDisplay}
+                            <div class="text-emerald-600 font-semibold">非課税支給額計 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>
+                            <div class="border-t border-white/30 pt-2 font-bold text-lg text-purple-600">
+                                総支給額 = ¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                }
                 
                 container.innerHTML = `
                     <div class="calculation-box">
                         <h4 class="text-xl font-bold mb-4 flex items-center">
                             <i class="fas fa-calculator mr-2"></i>総支給額計算式
                         </h4>
-                        <div class="space-y-2 font-mono text-sm">
-                            <div>基本給 = 総実働時間 × 時給</div>
-                            <div>基本給 = ${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}</div>
-                            <div>残業代 = ${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}</div>
-                            <div class="border-t border-white/30 pt-2 font-bold text-lg">
-                                総支給額 = ¥${summaryData.totalBasicSalary.toLocaleString()} + ¥${summaryData.totalOvertimeCost.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}
-                            </div>
-                        </div>
+                        ${formulaContent}
                     </div>
                 `;
                 container.classList.remove('hidden');
@@ -2115,16 +2561,39 @@
             // Get employee basic settings
             const employeeName = document.getElementById('employeeName').value || '従業員';
             const targetMonth = document.getElementById('targetMonth').value;
-            const employmentType = document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤';
-            const regularWage = document.getElementById('regularHourlyWage').value;
-            const overtimeWage = document.getElementById('overtimeHourlyWage').value;
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            const employmentType = isPartTime ? 'パート' : '常勤';
+            
+            // Get wage and allowance settings based on employment type
+            let wageSettings = {};
+            try {
+                if (isPartTime) {
+                    wageSettings = {
+                        regularWage: document.getElementById('regularHourlyWage').value,
+                        overtimeWage: document.getElementById('overtimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('parttime') || []
+                    };
+                } else {
+                    wageSettings = {
+                        baseSalary: document.getElementById('baseSalary').value,
+                        overtimeWage: document.getElementById('fulltimeOvertimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('fulltime') || []
+                    };
+                }
+            } catch (error) {
+                console.error('Error getting wage settings for Excel:', error);
+                showMessage('Excelエクスポート中にエラーが発生しました: ' + error.message, 'error');
+                return;
+            }
+            
             const totalPaidLeave = document.getElementById('totalPaidLeaveDays').value;
             const usedPaidLeave = document.getElementById('usedPaidLeaveDays').value;
             const remainingPaidLeave = document.getElementById('remainingPaidLeaveDays').value;
             const startDate = document.getElementById('periodStartDate').value;
             const endDate = document.getElementById('periodEndDate').value;
             const fileName = `${employeeName}_${targetMonth.replace('-', '')}_勤務実績表.xlsx`;
-            const isPartTime = document.getElementById('employmentType').value === 'parttime';
 
             const workbook = XLSX.utils.book_new();
             
@@ -2136,16 +2605,51 @@
                 ['氏名', employeeName],
                 ['対象月', targetMonth],
                 ['対象期間', `${startDate} ～ ${endDate}`],
-                ['勤務形態', employmentType],
-                ['通常時給', regularWage + '円/時'],
-                ['残業時給', overtimeWage + '円/時'],
+                ['勤務形態', employmentType]
+            ];
+            
+            // Add wage settings based on employment type
+            if (isPartTime) {
+                worksheetData.push(
+                    ['時給', wageSettings.regularWage + '円/時'],
+                    ['残業時給', wageSettings.overtimeWage + '円/時'],
+                    ['通勤手当', wageSettings.commutingAllowance + '円']
+                );
+                // Add multiple adjustment allowances
+                wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                    if (allowance.name || allowance.amount > 0) {
+                        worksheetData.push(
+                            [`調整手当${index + 1}名`, allowance.name],
+                            [`調整手当${index + 1}額`, allowance.amount + '円']
+                        );
+                    }
+                });
+            } else {
+                worksheetData.push(
+                    ['基本給', wageSettings.baseSalary + '円/月'],
+                    ['残業時給', wageSettings.overtimeWage + '円/時'],
+                    ['通勤手当', wageSettings.commutingAllowance + '円']
+                );
+                // Add multiple adjustment allowances
+                wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                    if (allowance.name || allowance.amount > 0) {
+                        worksheetData.push(
+                            [`調整手当${index + 1}名`, allowance.name],
+                            [`調整手当${index + 1}額`, allowance.amount + '円']
+                        );
+                    }
+                });
+            }
+            
+            // Add paid leave settings
+            worksheetData.push(
                 ['有給日数', totalPaidLeave + '日'],
                 ['今年度有給取得日', usedPaidLeave + '日'],
                 ['残り有給日数', remainingPaidLeave + '日'],
                 [''],
                 ['=== 曜日別詳細設定 ==='],
                 ['曜日', '残業開始時間', '休憩時間(分)', '残業単価(円/時)']
-            ];
+            );
 
             // Add day settings data
             const days = ['月', '火', '水', '木', '金', '土', '日'];
@@ -2170,11 +2674,79 @@
             );
 
             if (isPartTime) {
-                worksheetData.push(
-                    ['総実働時間', minutesToTime(summaryData.totalWorkMinutes)],
-                    ['総支給額', '¥' + summaryData.totalSalary.toLocaleString()]
-                );
+                worksheetData.push(['総実働時間', minutesToTime(summaryData.totalWorkMinutes)]);
             }
+            
+            // Add taxable/non-taxable breakdown
+            worksheetData.push(
+                [''],
+                ['課税対象支給額', '¥' + summaryData.taxableAmount.toLocaleString()],
+                ['非課税支給額', '¥' + summaryData.nonTaxableAmount.toLocaleString()],
+                ['総支給額', '¥' + summaryData.totalSalary.toLocaleString()]
+            );
+
+            // Add detailed salary calculation formula
+            worksheetData.push(
+                [''],
+                ['=== 総支給額計算式 ===']
+            );
+            
+            // Add calculation details based on employment type
+            if (isPartTime) {
+                const regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
+                const overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+                const allowancesData = getAllowancesData('parttime');
+                const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
+                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                
+                worksheetData.push(['【課税対象支給額】']);
+                worksheetData.push(['基本給', `${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}`]);
+                worksheetData.push(['残業代', `${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}`]);
+                
+                if (allowancesData.length > 0) {
+                    allowancesData.forEach(allowance => {
+                        if (allowance.name || allowance.amount > 0) {
+                            const displayName = allowance.name || '調整手当';
+                            worksheetData.push([displayName, `¥${allowance.amount.toLocaleString()}`]);
+                        }
+                    });
+                }
+                
+                worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
+                worksheetData.push(['']);
+                worksheetData.push(['【非課税支給額】']);
+                worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+            } else {
+                const monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
+                const overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
+                const allowancesData = getAllowancesData('fulltime');
+                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                
+                worksheetData.push(['【課税対象支給額】']);
+                worksheetData.push(['基本給', `¥${monthlyBaseSalary.toLocaleString()}`]);
+                worksheetData.push(['残業代', `${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}`]);
+                
+                if (allowancesData.length > 0) {
+                    allowancesData.forEach(allowance => {
+                        if (allowance.name || allowance.amount > 0) {
+                            const displayName = allowance.name || '調整手当';
+                            worksheetData.push([displayName, `¥${allowance.amount.toLocaleString()}`]);
+                        }
+                    });
+                }
+                
+                worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
+                worksheetData.push(['']);
+                worksheetData.push(['【非課税支給額】']);
+                worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+            }
+            
+            worksheetData.push(
+                [''],
+                ['総支給額', `¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}`]
+            );
 
             // Add headers
             const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '実働時間', '残業時間', '残業費用'];
@@ -2221,16 +2793,39 @@
             // Get employee basic settings
             const employeeName = document.getElementById('employeeName').value || '従業員';
             const targetMonth = document.getElementById('targetMonth').value;
-            const employmentType = document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤';
-            const regularWage = document.getElementById('regularHourlyWage').value;
-            const overtimeWage = document.getElementById('overtimeHourlyWage').value;
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            const employmentType = isPartTime ? 'パート' : '常勤';
+            
+            // Get wage and allowance settings based on employment type
+            let wageSettings = {};
+            try {
+                if (isPartTime) {
+                    wageSettings = {
+                        regularWage: document.getElementById('regularHourlyWage').value,
+                        overtimeWage: document.getElementById('overtimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('parttime') || []
+                    };
+                } else {
+                    wageSettings = {
+                        baseSalary: document.getElementById('baseSalary').value,
+                        overtimeWage: document.getElementById('fulltimeOvertimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('fulltime') || []
+                    };
+                }
+            } catch (error) {
+                console.error('Error getting wage settings for CSV:', error);
+                showMessage('CSVエクスポート中にエラーが発生しました: ' + error.message, 'error');
+                return;
+            }
+            
             const totalPaidLeave = document.getElementById('totalPaidLeaveDays').value;
             const usedPaidLeave = document.getElementById('usedPaidLeaveDays').value;
             const remainingPaidLeave = document.getElementById('remainingPaidLeaveDays').value;
             const startDate = document.getElementById('periodStartDate').value;
             const endDate = document.getElementById('periodEndDate').value;
             const fileName = `${employeeName}_${targetMonth.replace('-', '')}_勤務実績表.csv`;
-            const isPartTime = document.getElementById('employmentType').value === 'parttime';
 
             let csvContent = '\ufeff'; // BOM for UTF-8
             
@@ -2242,8 +2837,32 @@
             csvContent += `対象月,${targetMonth}\n`;
             csvContent += `対象期間,${startDate} ～ ${endDate}\n`;
             csvContent += `勤務形態,${employmentType}\n`;
-            csvContent += `通常時給,${regularWage}円/時\n`;
-            csvContent += `残業時給,${overtimeWage}円/時\n`;
+            
+            // Add wage settings based on employment type
+            if (isPartTime) {
+                csvContent += `時給,${wageSettings.regularWage}円/時\n`;
+                csvContent += `残業時給,${wageSettings.overtimeWage}円/時\n`;
+                csvContent += `通勤手当,${wageSettings.commutingAllowance}円\n`;
+                // Add multiple adjustment allowances
+                wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                    if (allowance.name || allowance.amount > 0) {
+                        csvContent += `調整手当${index + 1}名,${allowance.name}\n`;
+                        csvContent += `調整手当${index + 1}額,${allowance.amount}円\n`;
+                    }
+                });
+            } else {
+                csvContent += `基本給,${wageSettings.baseSalary}円/月\n`;
+                csvContent += `残業時給,${wageSettings.overtimeWage}円/時\n`;
+                csvContent += `通勤手当,${wageSettings.commutingAllowance}円\n`;
+                // Add multiple adjustment allowances
+                wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                    if (allowance.name || allowance.amount > 0) {
+                        csvContent += `調整手当${index + 1}名,${allowance.name}\n`;
+                        csvContent += `調整手当${index + 1}額,${allowance.amount}円\n`;
+                    }
+                });
+            }
+            
             csvContent += `有給日数,${totalPaidLeave}日\n`;
             csvContent += `今年度有給取得日,${usedPaidLeave}日\n`;
             csvContent += `残り有給日数,${remainingPaidLeave}日\n`;
@@ -2267,8 +2886,72 @@
             
             if (isPartTime) {
                 csvContent += `総実働時間,${minutesToTime(summaryData.totalWorkMinutes)}\n`;
-                csvContent += `総支給額,¥${summaryData.totalSalary.toLocaleString()}\n`;
             }
+            
+            // Add taxable/non-taxable breakdown
+            csvContent += '\n';
+            csvContent += `課税対象支給額,¥${summaryData.taxableAmount.toLocaleString()}\n`;
+            csvContent += `非課税支給額,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+            csvContent += `総支給額,¥${summaryData.totalSalary.toLocaleString()}\n`;
+
+            // Add detailed salary calculation formula
+            csvContent += '\n';
+            csvContent += '=== 総支給額計算式 ===\n';
+            
+            // Add calculation details based on employment type
+            if (isPartTime) {
+                const regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
+                const overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+                const allowancesData = getAllowancesData('parttime');
+                const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
+                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                
+                csvContent += '【課税対象支給額】\n';
+                csvContent += `基本給,${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}\n`;
+                csvContent += `残業代,${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}\n`;
+                
+                if (allowancesData.length > 0) {
+                    allowancesData.forEach(allowance => {
+                        if (allowance.name || allowance.amount > 0) {
+                            const displayName = allowance.name || '調整手当';
+                            csvContent += `${displayName},¥${allowance.amount.toLocaleString()}\n`;
+                        }
+                    });
+                }
+                
+                csvContent += `課税対象支給額計,¥${summaryData.taxableAmount.toLocaleString()}\n`;
+                csvContent += '\n';
+                csvContent += '【非課税支給額】\n';
+                csvContent += `通勤手当合計,¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                csvContent += `非課税支給額計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+            } else {
+                const monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
+                const overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
+                const allowancesData = getAllowancesData('fulltime');
+                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                
+                csvContent += '【課税対象支給額】\n';
+                csvContent += `基本給,¥${monthlyBaseSalary.toLocaleString()}\n`;
+                csvContent += `残業代,${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}\n`;
+                
+                if (allowancesData.length > 0) {
+                    allowancesData.forEach(allowance => {
+                        if (allowance.name || allowance.amount > 0) {
+                            const displayName = allowance.name || '調整手当';
+                            csvContent += `${displayName},¥${allowance.amount.toLocaleString()}\n`;
+                        }
+                    });
+                }
+                
+                csvContent += `課税対象支給額計,¥${summaryData.taxableAmount.toLocaleString()}\n`;
+                csvContent += '\n';
+                csvContent += '【非課税支給額】\n';
+                csvContent += `通勤手当合計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                csvContent += `非課税支給額計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+            }
+            
+            csvContent += '\n';
+            csvContent += `総支給額,¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}\n`;
             
             csvContent += '\n';
             csvContent += '詳細\n';
@@ -2501,6 +3184,188 @@
                 }
             }, 5000);
         }
+
+        // Multiple Allowances Functions
+        function addFulltimeAllowance() {
+            const container = document.getElementById('fulltimeAllowancesList');
+            const newRow = document.createElement('div');
+            newRow.className = 'allowance-row grid grid-cols-1 sm:grid-cols-3 gap-2 items-end';
+            newRow.innerHTML = `
+                <div>
+                    <input type="text" placeholder="手当名" onchange="recalculateIfNeeded()" class="allowance-name w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <input type="number" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="allowance-amount w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <button type="button" onclick="removeFulltimeAllowance(this)" class="bg-red-500 text-white px-2 py-2 rounded text-sm hover:bg-red-600 transition-colors w-full">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+            updateAllowanceDeleteButtons('fulltime');
+        }
+
+        function removeFulltimeAllowance(button) {
+            button.closest('.allowance-row').remove();
+            updateAllowanceDeleteButtons('fulltime');
+            recalculateIfNeeded();
+        }
+
+        function addParttimeAllowance() {
+            const container = document.getElementById('parttimeAllowancesList');
+            const newRow = document.createElement('div');
+            newRow.className = 'allowance-row grid grid-cols-1 sm:grid-cols-3 gap-2 items-end';
+            newRow.innerHTML = `
+                <div>
+                    <input type="text" placeholder="手当名" onchange="recalculateIfNeeded()" class="allowance-name w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <input type="number" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="allowance-amount w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <button type="button" onclick="removeParttimeAllowance(this)" class="bg-red-500 text-white px-2 py-2 rounded text-sm hover:bg-red-600 transition-colors w-full">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+            updateAllowanceDeleteButtons('parttime');
+        }
+
+        function removeParttimeAllowance(button) {
+            button.closest('.allowance-row').remove();
+            updateAllowanceDeleteButtons('parttime');
+            recalculateIfNeeded();
+        }
+
+        function updateAllowanceDeleteButtons(type) {
+            const container = document.getElementById(type === 'fulltime' ? 'fulltimeAllowancesList' : 'parttimeAllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            
+            rows.forEach((row, index) => {
+                const deleteButton = row.querySelector('button');
+                if (rows.length === 1) {
+                    deleteButton.style.display = 'none';
+                } else {
+                    deleteButton.style.display = 'block';
+                }
+            });
+        }
+
+        function getAllowancesTotal(type) {
+            const container = document.getElementById(type === 'fulltime' ? 'fulltimeAllowancesList' : 'parttimeAllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            let total = 0;
+            
+            rows.forEach(row => {
+                const amountInput = row.querySelector('.allowance-amount');
+                const amount = parseInt(amountInput.value) || 0;
+                total += amount;
+            });
+            
+            return total;
+        }
+
+        function getAllowancesData(type) {
+            const container = document.getElementById(type === 'fulltime' ? 'fulltimeAllowancesList' : 'parttimeAllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            const allowances = [];
+            
+            rows.forEach(row => {
+                const nameInput = row.querySelector('.allowance-name');
+                const amountInput = row.querySelector('.allowance-amount');
+                const name = nameInput.value.trim();
+                const amount = parseInt(amountInput.value) || 0;
+                
+                if (name || amount > 0) {
+                    allowances.push({ name: name, amount: amount });
+                }
+            });
+            
+            return allowances;
+        }
+
+        function setAllowanceName(empType, index, name) {
+            const containerType = empType === 'parttime' ? 'parttime' : 'fulltime';
+            const container = document.getElementById(containerType + 'AllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            
+            // Add rows if necessary
+            while (rows.length <= index) {
+                if (containerType === 'parttime') {
+                    addParttimeAllowance();
+                } else {
+                    addFulltimeAllowance();
+                }
+            }
+            
+            // Update the name
+            const targetRow = container.querySelectorAll('.allowance-row')[index];
+            if (targetRow) {
+                const nameInput = targetRow.querySelector('.allowance-name');
+                nameInput.value = name;
+            }
+        }
+
+        function setAllowanceAmount(empType, index, amount) {
+            const containerType = empType === 'parttime' ? 'parttime' : 'fulltime';
+            const container = document.getElementById(containerType + 'AllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            
+            // Add rows if necessary
+            while (rows.length <= index) {
+                if (containerType === 'parttime') {
+                    addParttimeAllowance();
+                } else {
+                    addFulltimeAllowance();
+                }
+            }
+            
+            // Update the amount
+            const targetRow = container.querySelectorAll('.allowance-row')[index];
+            if (targetRow) {
+                const amountInput = targetRow.querySelector('.allowance-amount');
+                amountInput.value = amount;
+            }
+        }
+
+        function setAllowancesData(type, allowancesArray) {
+            if (!allowancesArray || !Array.isArray(allowancesArray)) return;
+            
+            const containerType = type === 'parttime' ? 'parttime' : 'fulltime';
+            const container = document.getElementById(containerType + 'AllowancesList');
+            
+            // Clear existing rows first
+            const existingRows = container.querySelectorAll('.allowance-row');
+            existingRows.forEach(row => row.remove());
+            
+            // Add allowances from the data
+            allowancesArray.forEach((allowance, index) => {
+                if (containerType === 'parttime') {
+                    addParttimeAllowance();
+                } else {
+                    addFulltimeAllowance();
+                }
+                
+                if (allowance.name) {
+                    setAllowanceName(type, index, allowance.name);
+                }
+                if (allowance.amount !== undefined) {
+                    setAllowanceAmount(type, index, allowance.amount);
+                }
+            });
+            
+            // Update delete button visibility
+            updateAllowanceDeleteButtons(containerType);
+        }
+
+        // Initialize delete button visibility on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAllowanceDeleteButtons('fulltime');
+            updateAllowanceDeleteButtons('parttime');
+        });
     </script>
 </body>
 </html>
