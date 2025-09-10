@@ -95,15 +95,19 @@
                 <div class="flex flex-wrap justify-center gap-6 text-lg">
                     <div class="flex items-center">
                         <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                        <span>出退勤時刻を自動入力</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                        <span>残業代自動計算</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-300 mr-2"></i>
                         <span>設定の自動引き継ぎ</span>
                     </div>
                     <div class="flex items-center">
                         <i class="fas fa-check-circle text-green-300 mr-2"></i>
                         <span>過去データ統合管理</span>
-                    </div>
-                    <div class="flex items-center">
-                        <i class="fas fa-check-circle text-green-300 mr-2"></i>
-                        <span>残業代自動計算</span>
                     </div>
                 </div>
             </div>
@@ -166,22 +170,22 @@
             <!-- データ入力・処理 -->
             <div class="feature-card">
                 <div class="icon-circle">
-                    <i class="fas fa-table text-2xl"></i>
+                    <i class="fas fa-file-import text-2xl"></i>
                 </div>
-                <h3 class="text-xl font-bold mb-3">勤務データ入力・処理</h3>
-                <p class="text-sm opacity-90 mb-4">出退勤時間を入力すると、実働時間・残業時間・給与を自動計算</p>
+                <h3 class="text-xl font-bold mb-3">🎯 タイムカードCSV自動入力</h3>
+                <p class="text-sm opacity-90 mb-4">タイムカードアプリのCSVファイルをインポートすると、時刻データが自動入力され手入力を省略！</p>
                 <div class="space-y-2 text-sm">
                     <div class="flex items-center">
-                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
-                        <span>期間自動生成（月単位）</span>
+                        <i class="fas fa-star text-yellow-300 mr-2"></i>
+                        <span>タイムカードCSV自動読み込み</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-yellow-300 mr-2"></i>
+                        <span>出退勤時刻データ自動入力</span>
                     </div>
                     <div class="flex items-center">
                         <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
-                        <span>休日出勤対応</span>
-                    </div>
-                    <div class="flex items-center">
-                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
-                        <span>リアルタイム計算</span>
+                        <span>期間自動生成・休日出勤対応</span>
                     </div>
                 </div>
             </div>
@@ -298,11 +302,12 @@
                     <div class="step-card">
                         <div class="flex items-center mb-4">
                             <div class="w-10 h-10 bg-white bg-opacity-30 rounded-full flex items-center justify-center text-lg font-bold mr-4">3</div>
-                            <h3 class="text-xl font-bold">勤務データ入力</h3>
+                            <h3 class="text-xl font-bold">🎯 超簡単データ入力</h3>
                         </div>
-                        <p class="text-sm opacity-90 mb-3">日々の出退勤時間を入力</p>
+                        <p class="text-sm opacity-90 mb-3">タイムカードCSVをドラッグ&ドロップするだけ！</p>
                         <ul class="text-sm space-y-1">
-                            <li>• 出勤時間・退勤時間入力</li>
+                            <li>⭐ タイムカードCSV自動インポート</li>
+                            <li>⭐ 出退勤時刻が瞬時に自動入力</li>
                             <li>• 休日出勤のチェック</li>
                             <li>• 自動計算でリアルタイム更新</li>
                         </ul>
@@ -408,10 +413,10 @@
                 <!-- メリット1 -->
                 <div class="benefit-card">
                     <div class="text-center mb-4">
-                        <i class="fas fa-clock text-3xl mb-2"></i>
-                        <h3 class="text-xl font-bold">時間短縮</h3>
+                        <i class="fas fa-rocket text-3xl mb-2"></i>
+                        <h3 class="text-xl font-bold">🎯 劇的時間短縮</h3>
                     </div>
-                    <p class="text-sm opacity-90 text-center">手動計算が不要になり、給与計算の時間を大幅に短縮できます</p>
+                    <p class="text-sm opacity-90 text-center">タイムカードCSV自動インポート + 手動計算不要で給与計算時間を劇的短縮</p>
                 </div>
 
                 <!-- メリット2 -->
@@ -522,6 +527,15 @@
                         既存ファイルに追加保存の仕組みは？
                     </h3>
                     <p class="text-gray-600">過去の勤務実績表（Excelファイル）をインポートすると、そのファイルに<strong class="text-purple-600">新しいシートとして今月分が追加保存</strong>されます。これにより1つのファイルで複数月分を管理でき、過去データも失われません。シート名は「2024年01月」のように自動で命名されます。</p>
+                </div>
+
+                <!-- FAQ7 -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-3 text-gray-800">
+                        <i class="fas fa-question text-purple-500 mr-2"></i>
+                        🎯 タイムカードCSVの自動インポート機能は？
+                    </h3>
+                    <p class="text-gray-600">タイムカードアプリ（勤怠管理システム）から出力されたCSV/Excelファイルをドラッグ&ドロップするだけで、<strong class="text-blue-600">出退勤時刻が自動で入力</strong>されます。手入力が不要になり、入力ミスも防げます。様々なCSV形式に対応しており、日付・出勤時間・退勤時間が含まれていれば自動認識します。</p>
                 </div>
             </div>
         </div>
