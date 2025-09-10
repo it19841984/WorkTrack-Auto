@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤務実績表自動作成システム - 機能説明</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <style>
+        .feature-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .step-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .benefit-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 16px;
+        }
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .back-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            box-shadow: 0 4px 15px 0 rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px 0 rgba(102, 126, 234, 0.6);
+            color: white;
+            text-decoration: none;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 戻るボタン -->
+    <a href="./" class="back-button">
+        <i class="fas fa-arrow-left mr-2"></i>アプリに戻る
+    </a>
+
+    <!-- ヒーローセクション -->
+    <div class="hero-section">
+        <div class="container mx-auto px-6">
+            <div class="text-center">
+                <div class="inline-block p-4 bg-white bg-opacity-20 rounded-full mb-6">
+                    <i class="fas fa-calculator text-5xl"></i>
+                </div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">勤務実績表自動作成システム</h1>
+                <p class="text-xl md:text-2xl opacity-90 mb-4">給与計算を簡単・正確・自動化</p>
+                <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-8">
+                    <p class="text-lg font-semibold text-yellow-200 mb-2">🎯 究極の効率化を実現</p>
+                    <p class="text-sm opacity-90">一度設定すれば翌月も自動引き継ぎ ＋ 過去データも1ファイルで管理</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-6 text-lg">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                        <span>設定の自動引き継ぎ</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                        <span>過去データ統合管理</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-300 mr-2"></i>
+                        <span>残業代自動計算</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- メイン機能セクション -->
+    <div class="container mx-auto px-6 py-12">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">
+            <i class="fas fa-star text-yellow-500 mr-3"></i>主な機能
+        </h2>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- 従業員基本設定 -->
+            <div class="feature-card">
+                <div class="icon-circle">
+                    <i class="fas fa-user-cog text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">従業員基本設定</h3>
+                <p class="text-sm opacity-90 mb-4">氏名、対象月、雇用形態（常勤・パート）、給与設定、有給日数などの基本情報を設定</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>常勤：月給制 + 残業代</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>パート：時給制 + 残業代</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>通勤手当・調整手当設定</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 曜日別詳細設定 -->
+            <div class="feature-card">
+                <div class="icon-circle">
+                    <i class="fas fa-calendar-alt text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">曜日別詳細設定</h3>
+                <p class="text-sm opacity-90 mb-4">曜日ごとに残業開始時間、休憩時間、残業単価を個別設定可能</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>月曜〜日曜の個別設定</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>一括設定も可能</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>休憩時間の自動控除</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- データ入力・処理 -->
+            <div class="feature-card">
+                <div class="icon-circle">
+                    <i class="fas fa-table text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">勤務データ入力・処理</h3>
+                <p class="text-sm opacity-90 mb-4">出退勤時間を入力すると、実働時間・残業時間・給与を自動計算</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>期間自動生成（月単位）</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>休日出勤対応</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>リアルタイム計算</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 設定管理 -->
+            <div class="feature-card">
+                <div class="icon-circle">
+                    <i class="fas fa-magic text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">🎯 次月自動引き継ぎ機能</h3>
+                <p class="text-sm opacity-90 mb-4">一度設定すれば翌月も自動継続！過去ファイルインポートで設定も瞬時復元</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-yellow-300 mr-2"></i>
+                        <span>設定が次月に自動引き継ぎ</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-yellow-300 mr-2"></i>
+                        <span>過去ファイルから設定復元</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>JSON バックアップも対応</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ファイル出力 -->
+            <div class="feature-card">
+                <div class="icon-circle">
+                    <i class="fas fa-file-export text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">🏆 革新的データ統合管理</h3>
+                <p class="text-sm opacity-90 mb-4">既存ファイルに新シートとして追加保存！過去データも1つのファイルで完全管理</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-yellow-300 mr-2"></i>
+                        <span>既存ファイル + 新シート追加</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-yellow-300 mr-2"></i>
+                        <span>過去データを自動統合保管</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>Excel・CSV 単体出力も可能</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自動計算 -->
+            <div class="feature-card">
+                <div class="icon-circle">
+                    <i class="fas fa-calculator text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">高精度自動計算</h3>
+                <p class="text-sm opacity-90 mb-4">課税・非課税の分類、総支給額まで詳細に自動計算</p>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>実働時間・残業時間</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>課税対象・非課税支給額</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-circle text-xs mr-2 opacity-60"></i>
+                        <span>詳細な計算式も出力</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使い方の流れ -->
+    <div class="bg-white py-16">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">
+                <i class="fas fa-route text-blue-500 mr-3"></i>使い方の流れ
+            </h2>
+            
+            <div class="max-w-4xl mx-auto">
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- ステップ1 -->
+                    <div class="step-card">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-white bg-opacity-30 rounded-full flex items-center justify-center text-lg font-bold mr-4">1</div>
+                            <h3 class="text-xl font-bold">基本設定</h3>
+                        </div>
+                        <p class="text-sm opacity-90 mb-3">従業員情報と給与設定を入力</p>
+                        <ul class="text-sm space-y-1">
+                            <li>• 氏名・対象月の入力</li>
+                            <li>• 雇用形態（常勤・パート）選択</li>
+                            <li>• 給与・手当の設定</li>
+                        </ul>
+                    </div>
+
+                    <!-- ステップ2 -->
+                    <div class="step-card">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-white bg-opacity-30 rounded-full flex items-center justify-center text-lg font-bold mr-4">2</div>
+                            <h3 class="text-xl font-bold">曜日別設定</h3>
+                        </div>
+                        <p class="text-sm opacity-90 mb-3">勤務条件を曜日ごとに設定</p>
+                        <ul class="text-sm space-y-1">
+                            <li>• 残業開始時間の設定</li>
+                            <li>• 休憩時間の設定</li>
+                            <li>• 残業単価の設定</li>
+                        </ul>
+                    </div>
+
+                    <!-- ステップ3 -->
+                    <div class="step-card">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-white bg-opacity-30 rounded-full flex items-center justify-center text-lg font-bold mr-4">3</div>
+                            <h3 class="text-xl font-bold">勤務データ入力</h3>
+                        </div>
+                        <p class="text-sm opacity-90 mb-3">日々の出退勤時間を入力</p>
+                        <ul class="text-sm space-y-1">
+                            <li>• 出勤時間・退勤時間入力</li>
+                            <li>• 休日出勤のチェック</li>
+                            <li>• 自動計算でリアルタイム更新</li>
+                        </ul>
+                    </div>
+
+                    <!-- ステップ4 -->
+                    <div class="step-card">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-white bg-opacity-30 rounded-full flex items-center justify-center text-lg font-bold mr-4">4</div>
+                            <h3 class="text-xl font-bold">🏆 究極のエクスポート</h3>
+                        </div>
+                        <p class="text-sm opacity-90 mb-3">既存ファイルに新シート追加で過去データも統合管理！</p>
+                        <ul class="text-sm space-y-1">
+                            <li>⭐ 既存ファイル + 新シート = 全期間統合</li>
+                            <li>⭐ 翌月は設定が自動で引き継がれる</li>
+                            <li>• 詳細な計算式も完全出力</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 究極の効率化セクション -->
+    <div class="py-16" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">
+                <i class="fas fa-trophy text-yellow-600 mr-3"></i>🏆 究極の効率化を実現
+            </h2>
+            <p class="text-center text-gray-700 mb-12 text-lg">このシステムの真の価値は、継続使用での圧倒的な効率性にあります</p>
+            
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- 効率化1 -->
+                <div class="bg-white bg-opacity-90 rounded-lg p-6 shadow-lg">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-history text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">設定の自動引き継ぎ</h3>
+                    </div>
+                    <div class="space-y-2 text-gray-700">
+                        <p class="font-semibold text-blue-600">✨ 一度設定すれば、翌月も自動継続！</p>
+                        <ul class="text-sm space-y-1 pl-4">
+                            <li>• 従業員基本情報（氏名・給与設定）</li>
+                            <li>• 曜日別詳細設定（残業時間・休憩等）</li>
+                            <li>• 各種手当設定</li>
+                        </ul>
+                        <p class="text-xs text-gray-600 mt-3">👉 2ヶ月目以降は対象月を変更するだけ</p>
+                    </div>
+                </div>
+
+                <!-- 効率化2 -->
+                <div class="bg-white bg-opacity-90 rounded-lg p-6 shadow-lg">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-purple-500 text-white rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-layer-group text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">過去データ統合管理</h3>
+                    </div>
+                    <div class="space-y-2 text-gray-700">
+                        <p class="font-semibold text-purple-600">✨ 既存ファイルに新シート追加保存！</p>
+                        <ul class="text-sm space-y-1 pl-4">
+                            <li>• 1つのExcelファイルで全期間管理</li>
+                            <li>• 過去の履歴も自動で保持</li>
+                            <li>• シート名は月別で自動命名</li>
+                        </ul>
+                        <p class="text-xs text-gray-600 mt-3">👉 年間データも1ファイルで完結</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 具体例 -->
+            <div class="mt-12 bg-white bg-opacity-95 rounded-xl p-8 max-w-3xl mx-auto">
+                <h3 class="text-2xl font-bold text-center text-gray-800 mb-6">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>具体的な効率化の流れ
+                </h3>
+                <div class="grid md:grid-cols-3 gap-6 text-center">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto font-bold">1月</div>
+                        <p class="text-sm text-gray-700">初回設定 + データ入力<br>（通常の作業時間）</p>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto font-bold">2月</div>
+                        <p class="text-sm text-gray-700">設定自動継続<br><strong class="text-green-600">作業時間 80%短縮</strong></p>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center mx-auto font-bold">3月〜</div>
+                        <p class="text-sm text-gray-700">完全効率化モード<br><strong class="text-blue-600">データ入力のみ</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- メリット・特徴 -->
+    <div class="py-16">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">
+                <i class="fas fa-thumbs-up text-green-500 mr-3"></i>このシステムのメリット
+            </h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- メリット1 -->
+                <div class="benefit-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-clock text-3xl mb-2"></i>
+                        <h3 class="text-xl font-bold">時間短縮</h3>
+                    </div>
+                    <p class="text-sm opacity-90 text-center">手動計算が不要になり、給与計算の時間を大幅に短縮できます</p>
+                </div>
+
+                <!-- メリット2 -->
+                <div class="benefit-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-shield-alt text-3xl mb-2"></i>
+                        <h3 class="text-xl font-bold">計算ミス防止</h3>
+                    </div>
+                    <p class="text-sm opacity-90 text-center">自動計算により人的ミスを防止し、正確な給与計算を実現</p>
+                </div>
+
+                <!-- メリット3 -->
+                <div class="benefit-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-users text-3xl mb-2"></i>
+                        <h3 class="text-xl font-bold">多様な雇用形態対応</h3>
+                    </div>
+                    <p class="text-sm opacity-90 text-center">常勤・パート問わず、様々な雇用形態に柔軟に対応</p>
+                </div>
+
+                <!-- メリット4 -->
+                <div class="benefit-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-rocket text-3xl mb-2"></i>
+                        <h3 class="text-xl font-bold">🏆 究極の効率化</h3>
+                    </div>
+                    <p class="text-sm opacity-90 text-center">一度設定すれば翌月自動継続 + 過去データも1ファイル統合管理</p>
+                </div>
+
+                <!-- メリット5 -->
+                <div class="benefit-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-file-excel text-3xl mb-2"></i>
+                        <h3 class="text-xl font-bold">Excel連携</h3>
+                    </div>
+                    <p class="text-sm opacity-90 text-center">Excel形式での出力で、既存の業務フローに組み込みやすい</p>
+                </div>
+
+                <!-- メリット6 -->
+                <div class="benefit-card">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-mobile-alt text-3xl mb-2"></i>
+                        <h3 class="text-xl font-bold">どこでも使用可能</h3>
+                    </div>
+                    <p class="text-sm opacity-90 text-center">ブラウザがあれば、PC・タブレット・スマホで利用可能</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- よくある質問 -->
+    <div class="bg-white py-16">
+        <div class="container mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">
+                <i class="fas fa-question-circle text-purple-500 mr-3"></i>よくある質問
+            </h2>
+            
+            <div class="max-w-4xl mx-auto space-y-6">
+                <!-- FAQ1 -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-3 text-gray-800">
+                        <i class="fas fa-question text-purple-500 mr-2"></i>
+                        データはどこに保存されますか？
+                    </h3>
+                    <p class="text-gray-600">すべてのデータはお使いのブラウザ内（ローカル）に保存されます。外部サーバーには送信されないため、プライバシーが保護されます。</p>
+                </div>
+
+                <!-- FAQ2 -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-3 text-gray-800">
+                        <i class="fas fa-question text-purple-500 mr-2"></i>
+                        残業代の計算方法は？
+                    </h3>
+                    <p class="text-gray-600">設定した残業開始時間を超えた分が残業時間として計算されます。曜日ごとに異なる残業単価も設定可能です。</p>
+                </div>
+
+                <!-- FAQ3 -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-3 text-gray-800">
+                        <i class="fas fa-question text-purple-500 mr-2"></i>
+                        🏆 翌月以降はどれだけ楽になりますか？
+                    </h3>
+                    <p class="text-gray-600">劇的に効率化されます！<strong class="text-blue-600">一度設定すれば従業員基本設定と曜日別設定が自動で引き継がれるため</strong>、翌月は対象月を変更して勤務データを入力するだけ。さらに「既存ファイルに追加保存」で過去データも1つのExcelファイルで統合管理できます。</p>
+                </div>
+
+                <!-- FAQ4 -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-3 text-gray-800">
+                        <i class="fas fa-question text-purple-500 mr-2"></i>
+                        複数の従業員の管理はできますか？
+                    </h3>
+                    <p class="text-gray-600">1つのファイルで1人分の管理となります。複数の従業員を管理する場合は、従業員ごとに設定・エクスポートしてください。</p>
+                </div>
+
+                <!-- FAQ5 -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-3 text-gray-800">
+                        <i class="fas fa-question text-purple-500 mr-2"></i>
+                        手当の設定方法は？
+                    </h3>
+                    <p class="text-gray-600">通勤手当は固定額で設定し、調整手当は名称と金額を自由に追加できます。課税・非課税の分類も自動で行われます。</p>
+                </div>
+
+                <!-- FAQ6 -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="font-bold text-lg mb-3 text-gray-800">
+                        <i class="fas fa-question text-purple-500 mr-2"></i>
+                        既存ファイルに追加保存の仕組みは？
+                    </h3>
+                    <p class="text-gray-600">過去の勤務実績表（Excelファイル）をインポートすると、そのファイルに<strong class="text-purple-600">新しいシートとして今月分が追加保存</strong>されます。これにより1つのファイルで複数月分を管理でき、過去データも失われません。シート名は「2024年01月」のように自動で命名されます。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTAセクション -->
+    <div class="gradient-bg py-16">
+        <div class="container mx-auto px-6 text-center">
+            <div class="text-white">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6">🏆 究極の効率化を体験しよう！</h2>
+                <p class="text-xl mb-4 opacity-90">一度設定すれば翌月から劇的に楽になる！</p>
+                <p class="text-lg mb-8 opacity-80">設定自動引き継ぎ + 過去データ統合管理で、給与計算業務を革新します</p>
+                <a href="./" class="inline-flex items-center bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-bold hover:bg-opacity-90 transition-all duration-300 hover:scale-105">
+                    <i class="fas fa-rocket mr-3"></i>
+                    アプリを使い始める
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-gray-400">勤務実績表自動作成システム - 給与計算をもっと簡単に</p>
+        </div>
+    </footer>
+</body>
+</html>
