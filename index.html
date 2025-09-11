@@ -1459,7 +1459,7 @@
                     ['総残業費用', '¥' + summaryData.totalOvertimeCost.toLocaleString()]
                 );
 
-                if (isPartTime) {
+                if (!isPartTime) {
                     worksheetData.push(['総実働時間', minutesToTime(summaryData.totalWorkMinutes)]);
                 }
                 
@@ -2255,7 +2255,7 @@
                 </div>
             `;
 
-            if (isPartTime) {
+            if (!isPartTime) {
                 summaryHTML += `
                     <div class="summary-card">
                         <h4 class="text-sm opacity-80 mb-2">総実働時間</h4>
@@ -2702,7 +2702,7 @@
                 ['総残業費用', '¥' + summaryData.totalOvertimeCost.toLocaleString()]
             );
 
-            if (isPartTime) {
+            if (!isPartTime) {
                 worksheetData.push(['総実働時間', minutesToTime(summaryData.totalWorkMinutes)]);
             }
             
@@ -2913,7 +2913,7 @@
             csvContent += `総残業時間,${minutesToTime(summaryData.totalOvertimeMinutes)}\n`;
             csvContent += `総残業費用,¥${summaryData.totalOvertimeCost.toLocaleString()}\n`;
             
-            if (isPartTime) {
+            if (!isPartTime) {
                 csvContent += `総実働時間,${minutesToTime(summaryData.totalWorkMinutes)}\n`;
             }
             
