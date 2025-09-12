@@ -1,145 +1,3646 @@
-# 勤務実績表自動作成システム
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤務実績表自動作成システム</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .drag-over {
+            border-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        .calculation-box {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 12px;
+            padding: 16px;
+            color: white;
+            margin: 16px 0;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .part-time-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .editable-time {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: inline-block;
+            min-width: 90px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #42a5f5;
+            position: relative;
+            font-weight: 700;
+            color: #0d47a1;
+            font-size: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(66, 165, 245, 0.3);
+        }
+        .editable-time:hover {
+            background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+            border-color: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(66, 165, 245, 0.4);
+        }
+        .editable-time:before {
+            content: '📝';
+            position: absolute;
+            right: 4px;
+            top: 2px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        .editable-time:hover:before {
+            opacity: 1;
+        }
+        .editable-time-unset {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: inline-block;
+            min-width: 90px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #d6d8db;
+            position: relative;
+            font-weight: 400;
+            color: #6c757d;
+            font-size: 14px;
+            text-align: center;
+            box-shadow: none;
+        }
+        .editable-time-unset:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .editable-time-unset:before {
+            content: '✏️';
+            position: absolute;
+            right: 4px;
+            top: 2px;
+            font-size: 10px;
+            opacity: 0.5;
+        }
+        .editable-time-unset:hover:before {
+            opacity: 0.8;
+        }
+        .time-input {
+            border: 3px solid #1976d2;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 15px;
+            font-family: inherit;
+            width: 120px;
+            text-align: center;
+            background: linear-gradient(135deg, #fff 0%, #f3f8ff 100%);
+            box-shadow: 0 4px 16px rgba(25, 118, 210, 0.4);
+            font-weight: 700;
+            color: #0d47a1;
+            outline: none;
+        }
+        .time-input:focus {
+            border-color: #0d47a1;
+            box-shadow: 0 6px 20px rgba(25, 118, 210, 0.5);
+            transform: scale(1.05);
+        }
+         {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+        .export-buttons {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 24px 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .export-button {
+            min-width: 200px;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(0);
+        }
+        .export-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        .export-button:active {
+            transform: translateY(0);
+        }
+        .settings-import-export {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .period-setting {
+            background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 100%);
+            border: 2px solid #8b5cf6;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .holiday-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg mb-8 relative">
+            <!-- ヘルプボタン -->
+            <div class="absolute top-4 right-4">
+                <a href="./help.html" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 hover:scale-105 flex items-center" title="機能説明・使い方を見る">
+                    <i class="fas fa-question-circle mr-2"></i>
+                    <span class="hidden sm:inline">使い方・機能説明</span>
+                    <span class="sm:hidden">ヘルプ</span>
+                </a>
+            </div>
+            <div class="p-8 text-center">
+                <h1 class="text-4xl font-bold mb-4">
+                    <i class="fas fa-calculator mr-3"></i>勤務実績表自動作成システム
+                </h1>
+                <p class="text-xl opacity-90 mb-3">タイムカードのCSVファイルから自動で勤務実績表を作成します</p>
+                <div class="flex justify-center items-center space-x-4 text-sm opacity-80">
+                    <span class="flex items-center">
+                        <i class="fas fa-clock mr-1"></i>出退勤時刻を自動入力
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-calculator mr-1"></i>給与・残業代自動計算
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-magic mr-1"></i>設定の自動引き継ぎ
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-layer-group mr-1"></i>過去データ統合管理
+                    </span>
+                </div>
+            </div>
+        </div>
 
-給与計算をもっと簡単に、正確に、自動化するWebアプリケーションです。
+        <!-- File Upload Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Timecard CSV Upload -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-file-csv mr-3 text-blue-600"></i>タイムカードをインポート
+                </h3>
+                <div id="uploadArea" class="border-3 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-all hover:border-blue-400 hover:bg-blue-50">
+                    <i class="fas fa-file-upload text-4xl text-gray-400 mb-3"></i>
+                    <p class="text-lg text-gray-600 mb-3">Excel/CSVファイルをドラッグ&ドロップ</p>
+                    <input type="file" id="fileInput" accept=".csv,.xlsx" class="hidden">
+                    <div class="flex justify-center gap-3">
+                        <button onclick="document.getElementById('fileInput').click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                            <i class="fas fa-folder-open mr-2"></i>ファイル選択
+                        </button>
+                        <button onclick="clearFileSelection()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                            <i class="fas fa-times mr-2"></i>クリア
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-## 🏆 主な特徴
+            <!-- Work Report Import -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center flex-wrap">
+                    <i class="fas fa-file-import mr-3 text-indigo-600"></i>
+                    <span>過去の勤務実績表をインポート</span>
+                    <span class="text-sm text-gray-500 font-normal ml-2">（従業員基本設定、曜日別詳細設定のデータが自動反映されます）</span>
+                </h3>
+                <div id="workReportUploadArea" class="border-3 border-dashed border-indigo-300 rounded-lg p-8 text-center cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50">
+                    <i class="fas fa-file-excel text-4xl text-indigo-400 mb-3"></i>
+                    <p class="text-lg text-gray-600 mb-3">Excel/CSVファイルをドラッグ&ドロップ</p>
+                    <input type="file" id="workReportFileInput" accept=".csv,.xlsx" class="hidden">
+                    <div class="flex justify-center gap-3">
+                        <button onclick="document.getElementById('workReportFileInput').click()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm">
+                            <i class="fas fa-folder-open mr-2"></i>ファイル選択
+                        </button>
+                        <button onclick="clearWorkReportSelection()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
+                            <i class="fas fa-times mr-2"></i>クリア
+                        </button>
+                    </div>
+                </div>
+                <div id="workReportStatus" class="mt-3 text-sm text-gray-600 hidden">
+                    <i class="fas fa-check-circle text-green-600 mr-1"></i>勤務実績表が正常にインポートされ、設定情報が復元されました
+                </div>
+            </div>
+        </div>
 
-### ✨ 究極の効率化を実現
-- **設定自動引き継ぎ**: 一度設定すれば翌月も自動継続
-- **過去データ統合管理**: 既存ファイルに新シートとして追加保存
-- **リアルタイム自動計算**: 残業代・給与計算が瞬時に完了
+        <!-- Settings Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Basic Settings -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-user-cog mr-3 text-blue-600"></i>従業員基本設定
+                </h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">氏名</label>
+                            <input type="text" id="employeeName" placeholder="山田太郎" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">対象年月</label>
+                            <input type="month" id="targetMonth" onchange="autoCalculatePeriod()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <!-- Closing Day Setting -->
+                    <div class="closing-day-setting">
+                        <h4 class="text-lg font-semibold text-green-800 mb-3 flex items-center">
+                            <i class="fas fa-calendar-check mr-2"></i>締め日設定
+                        </h4>
+                        <div>
+                            <label class="block text-xs font-medium text-green-700 mb-1">締め日（1～31日、月末）</label>
+                            <select id="closingDate" onchange="autoCalculatePeriod()" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500 text-sm">
+                                <option value="" selected>選択してください</option>
+                                <option value="1">1日</option>
+                                <option value="2">2日</option>
+                                <option value="3">3日</option>
+                                <option value="4">4日</option>
+                                <option value="5">5日</option>
+                                <option value="6">6日</option>
+                                <option value="7">7日</option>
+                                <option value="8">8日</option>
+                                <option value="9">9日</option>
+                                <option value="10">10日</option>
+                                <option value="11">11日</option>
+                                <option value="12">12日</option>
+                                <option value="13">13日</option>
+                                <option value="14">14日</option>
+                                <option value="15">15日</option>
+                                <option value="16">16日</option>
+                                <option value="17">17日</option>
+                                <option value="18">18日</option>
+                                <option value="19">19日</option>
+                                <option value="20">20日</option>
+                                <option value="21">21日</option>
+                                <option value="22">22日</option>
+                                <option value="23">23日</option>
+                                <option value="24">24日</option>
+                                <option value="25">25日</option>
+                                <option value="26">26日</option>
+                                <option value="27">27日</option>
+                                <option value="28">28日</option>
+                                <option value="29">29日</option>
+                                <option value="30">30日</option>
+                                <option value="31">31日</option>
+                                <option value="monthEnd">月末</option>
+                            </select>
+                        </div>
+                        <p class="text-xs text-green-600 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>給与計算の基準となる締め日を設定します
+                        </p>
+                    </div>
+                    
+                    <!-- Period Setting -->
+                    <div class="period-setting">
+                        <h4 class="text-lg font-semibold text-purple-800 mb-3 flex items-center">
+                            <i class="fas fa-calendar-alt mr-2"></i>対象期間設定
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-purple-700 mb-1">開始日</label>
+                                <input type="date" id="periodStartDate" onchange="generatePeriodAndMergeData()" class="w-full px-3 py-2 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-purple-700 mb-1">終了日</label>
+                                <input type="date" id="periodEndDate" onchange="generatePeriodAndMergeData()" class="w-full px-3 py-2 border border-purple-300 rounded focus:ring-2 focus:ring-purple-500 text-sm">
+                            </div>
+                        </div>
+                        <p class="text-xs text-purple-600 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>期間を設定すると、該当期間のすべての日付を表示し、CSVデータを自動入力します
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">勤務形態</label>
+                        <select id="employmentType" onchange="toggleHourlyWage()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="fulltime">常勤</option>
+                            <option value="parttime">パート</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Fulltime Wage Settings -->
+                    <div id="fulltimeWageContainer" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="text-lg font-semibold text-blue-800 mb-3 flex items-center">
+                            <i class="fas fa-briefcase mr-2"></i>常勤給与設定
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-blue-800 mb-2">基本給 (円/月)</label>
+                                <input type="number" id="baseSalary" value="200000" min="0" placeholder="200000" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <!-- Commuting Allowance -->
+                            <div>
+                                <label class="block text-sm font-medium text-blue-800 mb-2">通勤手当 (円)</label>
+                                <input type="number" id="fulltimeCommutingAllowance" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <!-- Multiple Adjustment Allowances Section -->
+                            <div class="allowances-section">
+                                <div class="flex items-center justify-between mb-3">
+                                    <label class="text-sm font-medium text-blue-800">調整手当</label>
+                                    <button type="button" onclick="addFulltimeAllowance()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors">
+                                        <i class="fas fa-plus mr-1"></i>調整手当追加
+                                    </button>
+                                </div>
+                                <div id="fulltimeAllowancesList" class="space-y-2">
+                                    <!-- Initial allowance row -->
+                                    <div class="allowance-row grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                                        <div>
+                                            <input type="text" placeholder="役職手当" onchange="recalculateIfNeeded()" class="allowance-name w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                        </div>
+                                        <div>
+                                            <input type="number" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="allowance-amount w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                        </div>
+                                        <div>
+                                            <button type="button" onclick="removeFulltimeAllowance(this)" class="bg-red-500 text-white px-2 py-2 rounded text-sm hover:bg-red-600 transition-colors w-full" style="display: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-blue-800 mb-2">残業時給 (円/時)</label>
+                                <input type="number" id="fulltimeOvertimeHourlyWage" value="1500" min="0" placeholder="1500" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Parttime Wage Settings -->
+                    <div id="parttimeWageContainer" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4" style="display: none;">
+                        <h4 class="text-lg font-semibold text-yellow-800 mb-3 flex items-center">
+                            <i class="fas fa-clock mr-2"></i>パート給与設定
+                        </h4>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-yellow-800 mb-2">時給 (円/時)</label>
+                                    <input type="number" id="regularHourlyWage" value="1000" min="0" placeholder="1000" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-yellow-800 mb-2">残業時給 (円/時)</label>
+                                    <input type="number" id="overtimeHourlyWage" value="1250" min="0" placeholder="1250" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                </div>
+                            </div>
+                            
+                            <!-- Commuting Allowance -->
+                            <div>
+                                <label class="block text-sm font-medium text-yellow-800 mb-2">通勤手当（1日あたり） (円)</label>
+                                <input type="number" id="parttimeCommutingAllowance" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                            </div>
+                            
+                            <!-- Multiple Adjustment Allowances Section -->
+                            <div class="allowances-section">
+                                <div class="flex items-center justify-between mb-3">
+                                    <label class="text-sm font-medium text-yellow-800">調整手当</label>
+                                    <button type="button" onclick="addParttimeAllowance()" class="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 transition-colors">
+                                        <i class="fas fa-plus mr-1"></i>調整手当追加
+                                    </button>
+                                </div>
+                                <div id="parttimeAllowancesList" class="space-y-2">
+                                    <!-- Initial allowance row -->
+                                    <div class="allowance-row grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                                        <div>
+                                            <input type="text" placeholder="役職手当" onchange="recalculateIfNeeded()" class="allowance-name w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm">
+                                        </div>
+                                        <div>
+                                            <input type="number" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="allowance-amount w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm">
+                                        </div>
+                                        <div>
+                                            <button type="button" onclick="removeParttimeAllowance(this)" class="bg-red-500 text-white px-2 py-2 rounded text-sm hover:bg-red-600 transition-colors w-full" style="display: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Paid Leave Settings -->
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 class="text-lg font-semibold text-green-800 mb-3 flex items-center">
+                            <i class="fas fa-calendar-check mr-2"></i>有給休暇設定
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-green-800 mb-2">有給日数 (日)</label>
+                                <input type="number" id="totalPaidLeaveDays" value="20" min="0" placeholder="20" class="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-green-800 mb-2">今年度有給取得日 (日)</label>
+                                <input type="number" id="usedPaidLeaveDays" value="0" min="0" placeholder="0" onchange="calculateRemainingPaidLeave()" class="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-green-800 mb-2">残り有給日数 (日)</label>
+                                <input type="number" id="remainingPaidLeaveDays" value="20" min="0" readonly class="w-full px-4 py-2 border border-green-300 rounded-lg bg-green-100 text-green-800 font-semibold">
+                            </div>
+                        </div>
+                    </div>
 
-## 📋 現在実装済みの機能
+                </div>
+            </div>
 
-### 💼 従業員基本設定
-- 氏名・対象月・雇用形態（常勤・パート）の管理
-- **常勤**: 月給制 + 残業代計算
-- **パート**: 時給制 + 残業代計算
-- 通勤手当・調整手当の複数設定対応
-- 有給休暇の管理
+            <!-- Bulk Settings -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-cogs mr-3 text-blue-600"></i>一括設定
+                </h3>
+                
+                <!-- Settings Import/Export -->
+                <div class="settings-import-export mb-4">
+                    <h4 class="text-lg font-semibold text-amber-800 mb-3 flex items-center">
+                        <i class="fas fa-download mr-2"></i>従業員の基本・曜日別設定の保存・読み込み
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button onclick="exportSettings()" class="bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold shadow-lg border-2 border-blue-700">
+                            <i class="fas fa-file-export mr-2"></i>設定エクスポート
+                        </button>
+                        <div class="relative">
+                            <input type="file" id="settingsFileInput" accept=".json" onchange="importSettings()" class="hidden">
+                            <button onclick="document.getElementById('settingsFileInput').click()" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold shadow-lg border-2 border-green-700">
+                                <i class="fas fa-file-import mr-2"></i>設定インポート
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-### 📅 曜日別詳細設定
-- 月曜日〜日曜日の個別設定
-- 残業開始時間・休憩時間・残業単価の設定
-- 一括設定機能も提供
+                <!-- Common Settings -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <h4 class="text-lg font-semibold text-blue-800 mb-4">全曜日共通設定</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-blue-700 mb-1">残業開始時間</label>
+                            <input type="time" id="bulkOvertimeStart" value="18:00" class="w-full px-3 py-2 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-blue-700 mb-1">休憩時間(分)</label>
+                            <input type="number" id="bulkBreakTime" value="60" min="0" class="w-full px-3 py-2 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-blue-700 mb-1">残業単価(円/時)</label>
+                            <input type="number" id="bulkOvertimeRate" value="1500" min="0" class="w-full px-3 py-2 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <button onclick="applyBulkSettings()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-sync mr-2"></i>全曜日に適用
+                    </button>
+                </div>
 
-### 📊 データ処理・計算機能
-- タイムカードCSV/Excelファイルのインポート
-- 期間自動生成（月単位）
-- 休日出勤対応
-- **課税対象・非課税支給額**の自動分類
-- **詳細な給与計算式**の出力
+                <!-- Attendance Correction -->
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 class="text-lg font-semibold text-green-800 mb-2 flex items-center">
+                        <i class="fas fa-clock mr-2"></i>時刻一括変更
+                    </h4>
+                    <p class="text-sm text-green-700 mb-3">基準時刻より早く/遅くに出勤/退勤した場合は、一括で指定した時刻に変更します。</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-green-700 mb-1">対象時刻</label>
+                            <select id="correctionTimeType" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500 text-sm">
+                                <option value="startTime">出勤時間</option>
+                                <option value="endTime">退勤時間</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-green-700 mb-1">基準時刻</label>
+                            <input type="time" id="correctionBaseTime" value="09:00" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-green-700 mb-1">変更条件</label>
+                            <select id="correctionCondition" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500 text-sm">
+                                <option value="later">より遅い場合</option>
+                                <option value="earlier">より早い場合</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-green-700 mb-1">変更後時刻</label>
+                            <input type="time" id="correctionNewTime" value="09:00" class="w-full px-3 py-2 border border-green-300 rounded focus:ring-2 focus:ring-green-500 text-sm">
+                        </div>
+                    </div>
+                    <div class="bg-green-100 border border-green-200 rounded p-2 mb-3">
+                        <p class="text-xs text-green-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            例: 「出勤時間」で基準時刻「09:00」より「遅い場合」を「08:30」に変更
+                        </p>
+                    </div>
+                    <button onclick="applyCorrectionTime()" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-edit mr-2"></i>一括変更実行
+                    </button>
+                </div>
+            </div>
+        </div>
 
-### 🔄 設定管理
-- **JSON形式**での設定エクスポート・インポート
-- **過去の勤務実績表**からの設定復元
-- 設定の使い回し・バックアップ機能
+        <!-- Day Settings -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-calendar-week mr-3 text-blue-600"></i>曜日別詳細設定
+            </h3>
+            <div id="daySettings" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+                <!-- Day cards will be generated here -->
+            </div>
+        </div>
 
-### 📤 多形式ファイル出力
-- **Excel (.xlsx)** 形式でのエクスポート
-- **CSV** 形式でのエクスポート  
-- **🏆 既存ファイルへの追加保存**: 過去データも1ファイルで統合管理
+        <!-- Results Section -->
+        <div id="results" class="hidden">
+            <!-- Summary Cards -->
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-chart-line mr-3 text-green-600"></i>勤務実績表
+                </h2>
+                <div id="summaryCards" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <!-- Summary cards will be generated here -->
+                </div>
+            </div>
 
-### 🎯 高精度自動計算
-- 実働時間・残業時間の自動計算
-- **課税対象支給額** と **非課税支給額** の分離
-- **総支給額** まで詳細に自動計算
-- **計算式の詳細表示**
+            <!-- Calculation Formula -->
+            <div id="calculationFormula" class="hidden mb-6">
+                <!-- Calculation formula will be shown here -->
+            </div>
 
-## 🌐 公開URL
+            <!-- Data Table -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+                <div class="overflow-x-auto">
+                    <table id="resultsTable" class="w-full">
+                        <!-- Table will be generated here -->
+                    </table>
+                </div>
+            </div>
 
-- **本体アプリ**: [index.html](./)
-- **機能説明**: [help.html](./help.html)
+            <!-- Export Buttons -->
+            <div class="export-buttons no-print">
+                <div class="text-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center justify-center">
+                        <i class="fas fa-download mr-2"></i>ファイルエクスポート
+                    </h3>
+                    <p class="text-gray-600 text-sm mt-1">勤務実績表をファイル形式で保存できます</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-6">
+                    <button onclick="exportToExcel()" class="export-button bg-green-600 text-white hover:bg-green-700 flex items-center justify-center">
+                        <i class="fas fa-file-excel mr-3 text-xl"></i>
+                        <span>Excelエクスポート</span>
+                    </button>
+                    <button onclick="exportToCSV()" class="export-button bg-green-600 text-white hover:bg-green-700 flex items-center justify-center">
+                        <i class="fas fa-file-csv mr-3 text-xl"></i>
+                        <span>CSVエクスポート</span>
+                    </button>
+                </div>
+                
+                <!-- Append Export Section -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <div class="text-center mb-4">
+                        <h4 class="text-lg font-semibold text-gray-700 flex items-center justify-center">
+                            <i class="fas fa-plus-circle mr-2"></i>既存ファイルを残して保存
+                        </h4>
+                        <p class="text-gray-600 text-sm mt-1">インポートしたファイルに新しいシート（対象年月）を追加して保存</p>
+                    </div>
+                    <div class="flex justify-center">
+                        <button id="appendExportButton" onclick="exportAppendToExisting()" 
+                                class="export-button bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                disabled>
+                            <i class="fas fa-file-plus mr-3 text-xl"></i>
+                            <span>既存ファイルに追加保存</span>
+                        </button>
+                    </div>
+                    <div id="appendExportStatus" class="text-center mt-2 text-sm text-gray-500 hidden">
+                        <i class="fas fa-info-circle mr-1"></i>過去の勤務実績表をインポートすると利用可能になります
+                    </div>
+                </div>
+            </div>
+        </div>
 
-## 🔧 技術仕様
+        <!-- Messages -->
+        <div id="messageContainer"></div>
+    </div>
 
-### データモデル・構造
-```javascript
-// 従業員基本設定
-employeeSettings: {
-    name: string,           // 従業員名
-    targetMonth: string,    // 対象年月 (YYYY-MM)
-    employmentType: string, // 雇用形態 (fulltime/parttime)
-    totalPaidLeaveDays: number,
-    usedPaidLeaveDays: number,
-    wageSettings: {
-        // パートタイム
-        regularHourlyWage: number,
-        overtimeHourlyWage: number,
-        commutingAllowance: number,
-        // 常勤
-        baseSalary: number,
-        // 共通
-        adjustmentAllowances: Array<{name: string, amount: number}>
-    }
-}
+    <!-- フローティング ヘルプボタン -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <a href="./help.html" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 group" title="使い方・機能説明">
+            <i class="fas fa-question text-xl group-hover:scale-110 transition-transform duration-300"></i>
+        </a>
+    </div>
 
-// 曜日別設定
-daySettings: {
-    [day: string]: {
-        overtimeStart: string,  // HH:MM形式
-        breakTime: number,      // 分
-        overtimeRate: number    // 円/時
-    }
-}
+    <script>
+        // Global variables
+        let csvData = [];
+        let originalCsvData = [];
+        let processedData = [];
+        let allPeriodData = [];
+        let summaryData = {
+            workDays: 0,
+            holidayWorkDays: 0,
+            totalOvertimeMinutes: 0,
+            totalOvertimeCost: 0,
+            totalWorkMinutes: 0,
+            totalSalary: 0
+        };
 
-// 勤務データ
-workData: Array<{
-    date: string,           // YYYY-MM-DD
-    startTime: string,      // HH:MM
-    endTime: string,        // HH:MM
-    breakDuration: string,  // 休憩時間
-    isHolidayWork: boolean  // 休日出勤フラグ
-}>
-```
+        // Variables for append export functionality
+        let importedWorkbook = null;
+        let importedFileName = '';
+        let hasImportedWorkReport = false;
+        let daySettings = {
+            '月': { overtimeStart: '18:00', breakTime: 60, overtimeRate: 1500 },
+            '火': { overtimeStart: '18:00', breakTime: 60, overtimeRate: 1500 },
+            '水': { overtimeStart: '18:00', breakTime: 60, overtimeRate: 1500 },
+            '木': { overtimeStart: '18:00', breakTime: 60, overtimeRate: 1500 },
+            '金': { overtimeStart: '18:00', breakTime: 60, overtimeRate: 1500 },
+            '土': { overtimeStart: '18:00', breakTime: 60, overtimeRate: 1500 },
+            '日': { overtimeStart: '18:00', breakTime: 60, overtimeRate: 1500 }
+        };
 
-### ストレージ
-- **ローカルストレージ**: ブラウザ内でデータ保持
-- **ファイルエクスポート**: JSON、Excel、CSV形式
-- **データ統合**: 既存Excelファイルへのシート追加
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDaySettings();
+            setupEventListeners();
+            setDefaultMonth();
+            setDefaultPeriod();
 
-## 🚀 未実装機能・今後の開発予定
+            // 初期の対象期間を計算
+            setTimeout(() => {
+                autoCalculatePeriod();
+            }, 100);
+            enableAppendExport(); // Initialize append export button state
+        });
 
-### 📈 機能拡張
-- [ ] 複数従業員の一括管理
-- [ ] 年次有給休暇の自動計算
-- [ ] 社会保険料・税金計算
-- [ ] 勤怠統計・レポート機能
+        function setDefaultMonth() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('targetMonth').value = `${year}-${month}`;
+        }
 
-### 🔧 UI/UX改善
-- [ ] ダークモード対応
-- [ ] 印刷レイアウトの最適化
-- [ ] モバイル表示の更なる改善
+        function setDefaultPeriod() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            
+            // Set to current month's first and last day
+            const startDate = new Date(year, month, 1);
+            const endDate = new Date(year, month + 1, 0);
+            
+            document.getElementById('periodStartDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('periodEndDate').value = endDate.toISOString().split('T')[0];
+            
+            // Generate initial period data
+            generatePeriodAndMergeData();
+        }
 
-### 🔗 連携機能  
-- [ ] 他社勤怠システムとの連携
-- [ ] クラウドストレージ対応
-- [ ] API連携機能
+        function generatePeriodAndMergeData() {
+            const startDate = document.getElementById('periodStartDate').value;
+            const endDate = document.getElementById('periodEndDate').value;
 
-## 💡 推奨される次のステップ
+            if (!startDate || !endDate) {
+                return;
+            }
 
-1. **複数従業員管理**: 部署・チーム単位での一括処理
-2. **テンプレート機能**: 業種別の設定テンプレート
-3. **承認ワークフロー**: 上司承認機能の実装
-4. **データ分析**: 労働時間分析・コスト分析機能
+            // Generate all dates in the period
+            allPeriodData = [];
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (start > end) {
+                showMessage('開始日は終了日より前の日付を選択してください', 'error');
+                return;
+            }
+            
+            let currentDate = new Date(start);
+            while (currentDate <= end) {
+                const dateString = currentDate.toISOString().split('T')[0];
+                allPeriodData.push({
+                    date: dateString,
+                    workClass: '',
+                    workType: '',
+                    startTime: '',
+                    endTime: '',
+                    breakTime: '',
+                    breakDuration: '', // 個別の休憩時間
+                    overtime: '',
+                    vacation: '',
+                    isHolidayWork: false
+                });
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
 
-## 🎯 プロジェクトの目標
+            // Merge with CSV data if available
+            if (originalCsvData.length > 0) {
+                mergeCSVWithPeriodData();
+            }
 
-**給与計算業務の完全自動化**を目指し、以下を実現：
-- ⚡ **作業時間80%短縮**: 設定の自動引き継ぎにより
-- 🎯 **計算ミスゼロ**: 自動計算による人的エラー排除  
-- 📊 **データ統合管理**: 1ファイルですべての期間を管理
-- 🔄 **業務フロー改善**: 既存業務への自然な組み込み
+            // Process and display
+            csvData = [...allPeriodData];
+            processData();
+            document.getElementById('results').classList.remove('hidden');
+            
+            showMessage(`期間 ${startDate} ～ ${endDate} の${allPeriodData.length}日間を表示しています`, 'success');
+        }
 
----
+        function mergeCSVWithPeriodData() {
+            // Create a map of CSV data by date for quick lookup
+            const csvDataMap = {};
+            originalCsvData.forEach(row => {
+                if (row.date) {
+                    // Normalize date format - handle various formats
+                    let normalizedDate = row.date;
+                    
+                    // Handle different date formats
+                    if (normalizedDate.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                        // Convert YYYY/M/D to YYYY-MM-DD
+                        const parts = normalizedDate.split('/');
+                        normalizedDate = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                    } else if (normalizedDate.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                        // Convert M/D/YYYY to YYYY-MM-DD
+                        const parts = normalizedDate.split('/');
+                        normalizedDate = parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+                    } else if (normalizedDate.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                        // Convert YYYY-M-D to YYYY-MM-DD
+                        const parts = normalizedDate.split('-');
+                        normalizedDate = parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                    }
+                    
+                    csvDataMap[normalizedDate] = { ...row, date: normalizedDate };
+                }
+            });
 
-## ⚡ クイックスタート
+            // Merge CSV data with period data
+            allPeriodData.forEach(periodRow => {
+                const csvRow = csvDataMap[periodRow.date];
+                if (csvRow) {
+                    // Merge CSV data into period data, preserving the period date format
+                    Object.assign(periodRow, csvRow, { date: periodRow.date });
+                }
+            });
+        }
 
-1. **基本設定**: 従業員情報と給与設定を入力
-2. **曜日別設定**: 勤務条件を設定（一括設定も可能）
-3. **データ入力**: タイムカードをインポートまたは手動入力
-4. **エクスポート**: Excel・CSV形式で出力
+        function initializeDaySettings() {
+            const container = document.getElementById('daySettings');
+            const days = ['月', '火', '水', '木', '金', '土', '日'];
+            
+            container.innerHTML = '';
+            
+            days.forEach(day => {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'bg-gray-50 border border-gray-200 rounded-lg p-2';
+                dayCard.innerHTML = `
+                    <h4 class="font-medium text-gray-800 mb-2 text-center text-sm">${day}曜日</h4>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">残業開始</label>
+                            <input type="time" id="overtime-${day}" value="${daySettings[day].overtimeStart}" 
+                                   onchange="updateDaySetting('${day}', 'overtimeStart', this.value)" 
+                                   class="w-full px-1 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">休憩(分)</label>
+                            <input type="number" id="break-${day}" value="${daySettings[day].breakTime}" min="0"
+                                   onchange="updateDaySetting('${day}', 'breakTime', this.value)" 
+                                   class="w-full px-1 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">残業単価</label>
+                            <input type="number" id="rate-${day}" value="${daySettings[day].overtimeRate}" min="0"
+                                   onchange="updateDaySetting('${day}', 'overtimeRate', this.value)" 
+                                   class="w-full px-1 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(dayCard);
+            });
+        }
 
-**2ヶ月目以降は設定が自動引き継がれ、データ入力だけで完了！**
+        function setupEventListeners() {
+            // Timecard CSV upload area
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
 
-詳しい使い方は [機能説明ページ](./help.html) をご覧ください。
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('drag-over');
+            });
+
+            uploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('drag-over');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            uploadArea.addEventListener('click', (e) => {
+                // Only trigger file input if clicking on upload area but not on buttons
+                if (!e.target.closest('button')) {
+                    fileInput.click();
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+
+            // Work report upload area
+            const workReportUploadArea = document.getElementById('workReportUploadArea');
+            const workReportFileInput = document.getElementById('workReportFileInput');
+
+            workReportUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                workReportUploadArea.classList.add('drag-over');
+            });
+
+            workReportUploadArea.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                workReportUploadArea.classList.remove('drag-over');
+            });
+
+            workReportUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                workReportUploadArea.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleWorkReportFile(files[0]);
+                }
+            });
+
+            workReportUploadArea.addEventListener('click', (e) => {
+                // Only trigger file input if clicking on upload area but not on buttons
+                if (!e.target.closest('button')) {
+                    workReportFileInput.click();
+                }
+            });
+
+            workReportFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleWorkReportFile(e.target.files[0]);
+                }
+            });
+        }
+
+        function clearFileSelection() {
+            // Clear file input
+            const fileInput = document.getElementById('fileInput');
+            fileInput.value = '';
+            
+            // Reset data arrays
+            csvData = [];
+            originalCsvData = [];
+            processedData = [];
+            
+            // Reset summary data
+            summaryData = {
+                workDays: 0,
+                holidayWorkDays: 0,
+                totalOvertimeMinutes: 0,
+                totalOvertimeCost: 0,
+                totalWorkMinutes: 0,
+                totalSalary: 0
+            };
+            
+            // Hide results section
+            document.getElementById('results').classList.add('hidden');
+            
+            // Regenerate period data if period is set
+            generatePeriodAndMergeData();
+            
+            // Show success message
+            showMessage('ファイル選択をクリアしました', 'success');
+        }
+
+        // Settings Export/Import Functions
+        function exportSettings() {
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            
+            const settings = {
+                bulkSettings: {
+                    overtimeStart: document.getElementById('bulkOvertimeStart').value,
+                    breakTime: parseInt(document.getElementById('bulkBreakTime').value) || 60,
+                    overtimeRate: parseInt(document.getElementById('bulkOvertimeRate').value) || 1500
+                },
+                daySettings: { ...daySettings },
+                periodSettings: {
+                    startDate: document.getElementById('periodStartDate').value,
+                    endDate: document.getElementById('periodEndDate').value
+                },
+                employeeSettings: {
+                    name: document.getElementById('employeeName').value,
+                    targetMonth: document.getElementById('targetMonth').value,
+                    employmentType: document.getElementById('employmentType').value,
+                    totalPaidLeaveDays: document.getElementById('totalPaidLeaveDays').value,
+                    usedPaidLeaveDays: document.getElementById('usedPaidLeaveDays').value,
+                    closingDate: document.getElementById('closingDate').value,
+                    wageSettings: isPartTime ? {
+                        regularHourlyWage: document.getElementById('regularHourlyWage').value,
+                        overtimeHourlyWage: document.getElementById('overtimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('parttime')
+                    } : {
+                        baseSalary: document.getElementById('baseSalary').value,
+                        overtimeHourlyWage: document.getElementById('fulltimeOvertimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('fulltime')
+                    }
+                }
+            };
+
+            const settingsJson = JSON.stringify(settings, null, 2);
+            const blob = new Blob([settingsJson], { type: 'application/json' });
+            
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', '勤務実績表設定.json');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage('設定をエクスポートしました', 'success');
+        }
+
+        function importSettings() {
+            const fileInput = document.getElementById('settingsFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                showMessage('JSONファイルを選択してください', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const settings = JSON.parse(e.target.result);
+                    
+                    // Validate settings structure
+                    if (!settings.bulkSettings || !settings.daySettings) {
+                        throw new Error('設定ファイルの形式が正しくありません');
+                    }
+
+                    // Apply bulk settings
+                    if (settings.bulkSettings.overtimeStart) {
+                        document.getElementById('bulkOvertimeStart').value = settings.bulkSettings.overtimeStart;
+                    }
+                    if (settings.bulkSettings.breakTime !== undefined) {
+                        document.getElementById('bulkBreakTime').value = settings.bulkSettings.breakTime;
+                    }
+                    if (settings.bulkSettings.overtimeRate !== undefined) {
+                        document.getElementById('bulkOvertimeRate').value = settings.bulkSettings.overtimeRate;
+                    }
+
+                    // Apply period settings
+                    if (settings.periodSettings) {
+                        if (settings.periodSettings.startDate) {
+                            document.getElementById('periodStartDate').value = settings.periodSettings.startDate;
+                        }
+                        if (settings.periodSettings.endDate) {
+                            document.getElementById('periodEndDate').value = settings.periodSettings.endDate;
+                        }
+                    }
+
+                    // Apply day settings
+                    const days = ['月', '火', '水', '木', '金', '土', '日'];
+                    days.forEach(day => {
+                        if (settings.daySettings[day]) {
+                            daySettings[day] = { ...settings.daySettings[day] };
+                            
+                            // Update UI elements
+                            const overtimeInput = document.getElementById(`overtime-${day}`);
+                            const breakInput = document.getElementById(`break-${day}`);
+                            const rateInput = document.getElementById(`rate-${day}`);
+                            
+                            if (overtimeInput) overtimeInput.value = daySettings[day].overtimeStart;
+                            if (breakInput) breakInput.value = daySettings[day].breakTime;
+                            if (rateInput) rateInput.value = daySettings[day].overtimeRate;
+                        }
+                    });
+
+                    // Apply employee settings if available
+                    if (settings.employeeSettings) {
+                        const empSettings = settings.employeeSettings;
+                        
+                        // Apply basic employee information
+                        if (empSettings.name) {
+                            document.getElementById('employeeName').value = empSettings.name;
+                        }
+                        if (empSettings.targetMonth) {
+                            document.getElementById('targetMonth').value = empSettings.targetMonth;
+                        }
+                        if (empSettings.employmentType) {
+                            document.getElementById('employmentType').value = empSettings.employmentType;
+                            // Trigger employment type change to show/hide appropriate sections
+                            document.getElementById('employmentType').dispatchEvent(new Event('change'));
+                        }
+                        if (empSettings.totalPaidLeaveDays) {
+                            document.getElementById('totalPaidLeaveDays').value = empSettings.totalPaidLeaveDays;
+                        }
+                        if (empSettings.usedPaidLeaveDays) {
+                            document.getElementById('usedPaidLeaveDays').value = empSettings.usedPaidLeaveDays;
+                        }
+                        
+                        // Apply closing day settings
+                        if (empSettings.closingDate) {
+                            document.getElementById('closingDate').value = empSettings.closingDate;
+                        }
+                        
+                        // Apply wage settings based on employment type
+                        if (empSettings.wageSettings) {
+                            const isPartTime = empSettings.employmentType === 'parttime';
+                            
+                            if (isPartTime) {
+                                // Apply part-time wage settings
+                                if (empSettings.wageSettings.regularHourlyWage) {
+                                    document.getElementById('regularHourlyWage').value = empSettings.wageSettings.regularHourlyWage;
+                                }
+                                if (empSettings.wageSettings.overtimeHourlyWage) {
+                                    document.getElementById('overtimeHourlyWage').value = empSettings.wageSettings.overtimeHourlyWage;
+                                }
+                                if (empSettings.wageSettings.commutingAllowance) {
+                                    document.getElementById('parttimeCommutingAllowance').value = empSettings.wageSettings.commutingAllowance;
+                                }
+                                if (empSettings.wageSettings.adjustmentAllowances) {
+                                    setAllowancesData('parttime', empSettings.wageSettings.adjustmentAllowances);
+                                }
+                            } else {
+                                // Apply full-time wage settings
+                                if (empSettings.wageSettings.baseSalary) {
+                                    document.getElementById('baseSalary').value = empSettings.wageSettings.baseSalary;
+                                }
+                                if (empSettings.wageSettings.overtimeHourlyWage) {
+                                    document.getElementById('fulltimeOvertimeHourlyWage').value = empSettings.wageSettings.overtimeHourlyWage;
+                                }
+                                if (empSettings.wageSettings.commutingAllowance) {
+                                    document.getElementById('fulltimeCommutingAllowance').value = empSettings.wageSettings.commutingAllowance;
+                                }
+                                if (empSettings.wageSettings.adjustmentAllowances) {
+                                    setAllowancesData('fulltime', empSettings.wageSettings.adjustmentAllowances);
+                                }
+                            }
+                        }
+                        
+                        // Update remaining paid leave calculation
+                        calculateRemainingPaidLeave();
+                    }
+
+                    // Regenerate period and merge if needed
+                    generatePeriodAndMergeData();
+
+                    showMessage('設定をインポートしました', 'success');
+                    
+                } catch (error) {
+                    showMessage('設定ファイルの読み込みに失敗しました: ' + error.message, 'error');
+                }
+            };
+            
+            reader.readAsText(file, 'UTF-8');
+            
+            // Clear file input
+            fileInput.value = '';
+        }
+
+        function handleWorkReportFile(file) {
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+            const statusDiv = document.getElementById('workReportStatus');
+            
+            if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
+                showMessage('CSV または Excel ファイルを選択してください', 'error');
+                return;
+            }
+
+            // Store file information for append export
+            importedFileName = file.name;
+
+            if (fileName.endsWith('.xlsx')) {
+                // Handle Excel file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[workbook.SheetNames.length - 1];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const csvData = XLSX.utils.sheet_to_csv(worksheet);
+                        
+                        // Store workbook for append export
+                        importedWorkbook = workbook;
+                        hasImportedWorkReport = true;
+                        
+                        parseWorkReportData(csvData);
+                        showWorkReportImportSuccess();
+                        enableAppendExport();
+                        
+                    } catch (error) {
+                        showMessage('Excelファイルの読み込みに失敗しました: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                // Handle CSV file - create a simple workbook structure
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const csvData = e.target.result;
+                        
+                        // Create a workbook from CSV data for append export
+                        const worksheet = XLSX.utils.aoa_to_sheet(csvData.split('\n').map(line => line.split(',')));
+                        importedWorkbook = XLSX.utils.book_new();
+                        XLSX.utils.book_append_sheet(importedWorkbook, worksheet, '勤務実績表');
+                        hasImportedWorkReport = true;
+                        
+                        parseWorkReportData(csvData);
+                        showWorkReportImportSuccess();
+                        enableAppendExport();
+                    } catch (error) {
+                        showMessage('CSVファイルの読み込みに失敗しました: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file, 'UTF-8');
+            }
+        }
+
+        function importWorkReport() {
+            const fileInput = document.getElementById('workReportFileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            handleWorkReportFile(file);
+        }
+
+        function parseWorkReportData(csvData) {
+            const lines = csvData.split('\n').filter(line => line.trim());
+            let employeeSettingsFound = false;
+            let daySettingsFound = false;
+            
+            // Look for settings sections
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // Parse employee basic settings
+                if (line.includes('=== 従業員基本設定 ===')) {
+                    employeeSettingsFound = true;
+                    
+                    // Parse employee settings
+                    for (let j = i + 1; j < lines.length; j++) {
+                        const settingLine = lines[j].trim();
+                        if (!settingLine || settingLine.includes('===') || settingLine.includes('サマリー')) {
+                            break;
+                        }
+                        
+                        const [key, value] = settingLine.split(',').map(item => item.replace(/"/g, '').trim());
+                        if (key && value) {
+                            switch (key) {
+                                case '氏名':
+                                    document.getElementById('employeeName').value = value;
+                                    break;
+                                case '対象月':
+                                    // 自動で次の月に設定（YYYY-MM形式で）
+                                    const currentTargetMonth = value;
+                                    const nextMonth = getNextMonthForInput(currentTargetMonth);
+                                    document.getElementById('targetMonth').value = nextMonth;
+                                    // 対象月変更後に自動で期間を計算
+                                    setTimeout(() => {
+                                        autoCalculatePeriod();
+                                    }, 100);
+                                    break;
+                                case '対象期間':
+                                    const periodMatch = value.match(/(\d{4}-\d{2}-\d{2})\s*～\s*(\d{4}-\d{2}-\d{2})/);
+                                    if (periodMatch) {
+                                        // インポートファイルの終了日の翌日を開始日に設定
+                                        const currentEndDate = new Date(periodMatch[2]);
+                                        const nextStartDate = new Date(currentEndDate);
+                                        nextStartDate.setDate(nextStartDate.getDate() + 1);
+                                        
+                                        // 終了日はインポートファイルの終了日の一ヶ月後に設定
+                                        const originalEndDate = new Date(periodMatch[2]);
+                                        const lastDayOfOriginalMonth = new Date(originalEndDate.getFullYear(), originalEndDate.getMonth() + 1, 0).getDate();
+                                        
+                                        let nextEndDate;
+                                        if (originalEndDate.getDate() === lastDayOfOriginalMonth) {
+                                            // 元の終了日が月末の場合、次の月の月末に設定
+                                            nextEndDate = new Date(originalEndDate);
+                                            nextEndDate.setMonth(nextEndDate.getMonth() + 1);
+                                            // 次の月の最終日を取得
+                                            const nextMonthLastDay = new Date(nextEndDate.getFullYear(), nextEndDate.getMonth() + 1, 0).getDate();
+                                            nextEndDate.setDate(nextMonthLastDay);
+                                        } else {
+                                            // 通常の場合、一ヶ月後の同じ日に設定
+                                            nextEndDate = new Date(periodMatch[2]);
+                                            nextEndDate.setMonth(nextEndDate.getMonth() + 1);
+                                        }
+                                        
+                                        document.getElementById('periodStartDate').value = nextStartDate.toISOString().split('T')[0];
+                                        document.getElementById('periodEndDate').value = nextEndDate.toISOString().split('T')[0];
+                                    }
+                                    break;
+                                case '勤務形態':
+                                    const employmentType = value === 'パート' ? 'parttime' : 'fulltime';
+                                    document.getElementById('employmentType').value = employmentType;
+                                    toggleHourlyWage();
+                                    break;
+                                case '締め日':
+                                    if (value === '月末') {
+                                        document.getElementById('closingDate').value = 'monthEnd';
+                                    } else {
+                                        const dayMatch = value.match(/(\d+)日/);
+                                        if (dayMatch) {
+                                            document.getElementById('closingDate').value = dayMatch[1];
+                                        }
+                                    }
+                                    break;
+                                case '通常時給':
+                                case '時給':
+                                    const regularWage = value.replace(/[円\/時]/g, '').trim();
+                                    if (regularWage) {
+                                        document.getElementById('regularHourlyWage').value = regularWage;
+                                    }
+                                    break;
+                                case '残業時給':
+                                    const overtimeWage = value.replace(/[円\/時]/g, '').trim();
+                                    const currentEmploymentType = document.getElementById('employmentType').value;
+                                    if (overtimeWage) {
+                                        if (currentEmploymentType === 'parttime') {
+                                            document.getElementById('overtimeHourlyWage').value = overtimeWage;
+                                        } else {
+                                            document.getElementById('fulltimeOvertimeHourlyWage').value = overtimeWage;
+                                        }
+                                    }
+                                    break;
+                                case '基本給':
+                                    const baseSalary = value.replace(/[円\/月]/g, '').trim();
+                                    if (baseSalary) {
+                                        document.getElementById('baseSalary').value = baseSalary;
+                                    }
+                                    break;
+                                case '通勤手当':
+                                    const commutingAllowance = value.replace(/円/g, '').trim();
+                                    const empTypeForCommuting = document.getElementById('employmentType').value;
+                                    if (commutingAllowance) {
+                                        if (empTypeForCommuting === 'parttime') {
+                                            document.getElementById('parttimeCommutingAllowance').value = commutingAllowance;
+                                        } else {
+                                            document.getElementById('fulltimeCommutingAllowance').value = commutingAllowance;
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    // Handle multiple adjustment allowances (調整手当1名, 調整手当1額, etc.)
+                                    if (key.match(/^調整手当(\d+)名$/)) {
+                                        const empTypeForAllowance = document.getElementById('employmentType').value;
+                                        const allowanceIndex = parseInt(key.match(/^調整手当(\d+)名$/)[1]) - 1;
+                                        setAllowanceName(empTypeForAllowance, allowanceIndex, value);
+                                    } else if (key.match(/^調整手当(\d+)額$/)) {
+                                        const allowanceAmount = value.replace(/円/g, '').trim();
+                                        const empTypeForAmount = document.getElementById('employmentType').value;
+                                        const allowanceIndex = parseInt(key.match(/^調整手当(\d+)額$/)[1]) - 1;
+                                        if (allowanceAmount) {
+                                            setAllowanceAmount(empTypeForAmount, allowanceIndex, allowanceAmount);
+                                        }
+                                    }
+                                    break;
+                                case '有給日数':
+                                    const totalPaidLeave = value.replace(/日/g, '').trim();
+                                    if (totalPaidLeave) {
+                                        document.getElementById('totalPaidLeaveDays').value = totalPaidLeave;
+                                    }
+                                    break;
+                                case '今年度有給取得日':
+                                    const usedPaidLeave = value.replace(/日/g, '').trim();
+                                    if (usedPaidLeave) {
+                                        document.getElementById('usedPaidLeaveDays').value = usedPaidLeave;
+                                        calculateRemainingPaidLeave();
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+                
+                // Parse day settings
+                if (line.includes('=== 曜日別詳細設定 ===')) {
+                    daySettingsFound = true;
+                    
+                    // Skip header line
+                    let headerSkipped = false;
+                    for (let j = i + 1; j < lines.length; j++) {
+                        const dayLine = lines[j].trim();
+                        if (!dayLine || dayLine.includes('===') || dayLine.includes('サマリー')) {
+                            break;
+                        }
+                        
+                        // Skip header row (曜日,残業開始時間,休憩時間(分),残業単価(円/時))
+                        if (!headerSkipped && dayLine.includes('曜日') && dayLine.includes('残業開始時間')) {
+                            headerSkipped = true;
+                            continue;
+                        }
+                        
+                        const [day, overtimeStart, breakTime, overtimeRate] = dayLine.split(',').map(item => item.replace(/"/g, '').trim());
+                        
+                        if (day && ['月', '火', '水', '木', '金', '土', '日'].includes(day)) {
+                            daySettings[day] = {
+                                overtimeStart: overtimeStart || '18:00',
+                                breakTime: parseInt(breakTime) || 60,
+                                overtimeRate: parseInt(overtimeRate) || 1500
+                            };
+                            
+                            // Update UI elements
+                            const overtimeInput = document.getElementById(`overtime-${day}`);
+                            const breakInput = document.getElementById(`break-${day}`);
+                            const rateInput = document.getElementById(`rate-${day}`);
+                            
+                            if (overtimeInput) overtimeInput.value = daySettings[day].overtimeStart;
+                            if (breakInput) breakInput.value = daySettings[day].breakTime;
+                            if (rateInput) rateInput.value = daySettings[day].overtimeRate;
+                        }
+                    }
+                }
+            }
+
+            if (!employeeSettingsFound) {
+                throw new Error('従業員基本設定が見つかりませんでした。エクスポートされた勤務実績表ファイルを選択してください。');
+            }
+
+            // Generate period data if dates were imported
+            const startDate = document.getElementById('periodStartDate').value;
+            const endDate = document.getElementById('periodEndDate').value;
+            if (startDate && endDate) {
+                generatePeriodAndMergeData();
+            }
+        }
+
+        function showWorkReportImportSuccess() {
+            const statusDiv = document.getElementById('workReportStatus');
+            statusDiv.classList.remove('hidden');
+            statusDiv.innerHTML = '<i class="fas fa-check-circle text-green-600 mr-1"></i>勤務実績表が正常にインポートされ、設定情報が復元されました';
+            showMessage('勤務実績表をインポートし、従業員基本設定と曜日別詳細設定を復元しました', 'success');
+            
+            // Clear file input
+            document.getElementById('workReportFileInput').value = '';
+        }
+
+        function enableAppendExport() {
+            const appendButton = document.getElementById('appendExportButton');
+            const statusDiv = document.getElementById('appendExportStatus');
+            
+            if (hasImportedWorkReport) {
+                appendButton.disabled = false;
+                statusDiv.classList.add('hidden');
+            } else {
+                appendButton.disabled = true;
+                statusDiv.classList.remove('hidden');
+            }
+        }
+
+        function exportAppendToExisting() {
+            if (!hasImportedWorkReport || !importedWorkbook) {
+                showMessage('先に過去の勤務実績表をインポートしてください', 'error');
+                return;
+            }
+
+            if (processedData.length === 0) {
+                showMessage('エクスポートするデータがありません', 'error');
+                return;
+            }
+
+            try {
+                // Get target month for sheet name
+                const targetMonth = document.getElementById('targetMonth').value;
+                let sheetName = targetMonth ? targetMonth.replace('-', '年') + '月' : '新しいシート';
+                
+                // Ensure unique sheet name
+                let counter = 1;
+                let originalSheetName = sheetName;
+                while (importedWorkbook.SheetNames.includes(sheetName)) {
+                    sheetName = originalSheetName + '_' + counter;
+                    counter++;
+                }
+
+                // Get employee basic settings
+                const employeeName = document.getElementById('employeeName').value || '従業員';
+                const employmentType = document.getElementById('employmentType').value === 'parttime' ? 'パート' : '常勤';
+                const isPartTime = document.getElementById('employmentType').value === 'parttime';
+                const regularWage = isPartTime ? document.getElementById('regularHourlyWage').value : document.getElementById('baseSalary').value;
+                const overtimeWage = isPartTime ? document.getElementById('overtimeHourlyWage').value : document.getElementById('fulltimeOvertimeHourlyWage').value;
+                const totalPaidLeave = document.getElementById('totalPaidLeaveDays').value;
+                const usedPaidLeave = document.getElementById('usedPaidLeaveDays').value;
+                const remainingPaidLeave = document.getElementById('remainingPaidLeaveDays').value;
+                const startDate = document.getElementById('periodStartDate').value;
+                const endDate = document.getElementById('periodEndDate').value;
+
+                // Get wage and allowance settings based on employment type
+                let wageSettings = {};
+                try {
+                    if (isPartTime) {
+                        wageSettings = {
+                            regularWage: regularWage,
+                            overtimeWage: overtimeWage,
+                            commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                            adjustmentAllowances: getAllowancesData('parttime') || []
+                        };
+                    } else {
+                        wageSettings = {
+                            baseSalary: regularWage,
+                            overtimeWage: overtimeWage,
+                            commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                            adjustmentAllowances: getAllowancesData('fulltime') || []
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error getting wage settings:', error);
+                }
+
+                // Create worksheet data with employee basic settings
+                const worksheetData = [
+                    ['勤務実績表'],
+                    [''],
+                    ['=== 従業員基本設定 ==='],
+                    ['氏名', employeeName],
+                    ['対象月', targetMonth],
+                    ['対象期間', `${startDate} ～ ${endDate}`],
+                    ['勤務形態', employmentType],
+                    ['締め日', getClosingDayText()]
+                ];
+                
+                // Add wage settings based on employment type
+                if (isPartTime) {
+                    worksheetData.push(
+                        ['時給', wageSettings.regularWage + '円/時'],
+                        ['残業時給', wageSettings.overtimeWage + '円/時'],
+                        ['通勤手当', wageSettings.commutingAllowance + '円']
+                    );
+                    // Add multiple adjustment allowances
+                    wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                        if (allowance.name || allowance.amount > 0) {
+                            worksheetData.push(
+                                [`調整手当${index + 1}名`, allowance.name],
+                                [`調整手当${index + 1}額`, allowance.amount + '円']
+                            );
+                        }
+                    });
+                } else {
+                    worksheetData.push(
+                        ['基本給', wageSettings.baseSalary + '円/月'],
+                        ['残業時給', wageSettings.overtimeWage + '円/時'],
+                        ['通勤手当', wageSettings.commutingAllowance + '円']
+                    );
+                    // Add multiple adjustment allowances
+                    wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                        if (allowance.name || allowance.amount > 0) {
+                            worksheetData.push(
+                                [`調整手当${index + 1}名`, allowance.name],
+                                [`調整手当${index + 1}額`, allowance.amount + '円']
+                            );
+                        }
+                    });
+                }
+                
+                // Add paid leave settings
+                worksheetData.push(
+                    ['有給日数', totalPaidLeave + '日'],
+                    ['今年度有給取得日', usedPaidLeave + '日'],
+                    ['残り有給日数', remainingPaidLeave + '日'],
+                    [''],
+                    ['=== 曜日別詳細設定 ==='],
+                    ['曜日', '残業開始時間', '休憩時間(分)', '残業単価(円/時)']
+                );
+
+                // Add day settings data
+                const days = ['月', '火', '水', '木', '金', '土', '日'];
+                days.forEach(day => {
+                    worksheetData.push([
+                        day,
+                        daySettings[day].overtimeStart,
+                        daySettings[day].breakTime,
+                        daySettings[day].overtimeRate
+                    ]);
+                });
+
+                worksheetData.push(['']);
+
+                worksheetData.push(
+                    [''],
+                    ['サマリー'],
+                    ['出勤日数', summaryData.workDays + '日'],
+                    ['休日出勤日数', summaryData.holidayWorkDays + '日'],
+                    ['総残業時間', minutesToTime(summaryData.totalOvertimeMinutes)],
+                    ['総残業費用', '¥' + summaryData.totalOvertimeCost.toLocaleString()]
+                );
+
+                if (!isPartTime) {
+                    worksheetData.push(['総実働時間', minutesToTime(summaryData.totalWorkMinutes)]);
+                }
+                
+                // Add taxable/non-taxable breakdown
+                worksheetData.push(
+                    [''],
+                    ['課税対象支給額', '¥' + summaryData.taxableAmount.toLocaleString()],
+                    ['非課税支給額', '¥' + summaryData.nonTaxableAmount.toLocaleString()],
+                    ['総支給額', '¥' + summaryData.totalSalary.toLocaleString()]
+                );
+
+                // Add detailed salary calculation formula
+                worksheetData.push(
+                    [''],
+                    ['=== 総支給額計算式 ===']
+                );
+                
+                // Add calculation details based on employment type
+                if (isPartTime) {
+                    const regularHourlyWage = parseInt(wageSettings.regularWage) || 1000;
+                    const overtimeHourlyWage = parseInt(wageSettings.overtimeWage) || 1250;
+                    const allowancesData = wageSettings.adjustmentAllowances;
+                    const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
+                    const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                    
+                    worksheetData.push(['【課税対象支給額】']);
+                    worksheetData.push(['基本給', `${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}`]);
+                    worksheetData.push(['残業代', `${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}`]);
+                    
+                    if (allowancesData.length > 0) {
+                        allowancesData.forEach(allowance => {
+                            if (allowance.name || allowance.amount > 0) {
+                                const displayName = allowance.name || '調整手当';
+                                worksheetData.push([displayName, `¥${allowance.amount.toLocaleString()}`]);
+                            }
+                        });
+                    }
+                    
+                    worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
+                    worksheetData.push(['']);
+                    worksheetData.push(['【非課税支給額】']);
+                    worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                } else {
+                    const monthlyBaseSalary = parseInt(wageSettings.baseSalary) || 200000;
+                    const overtimeHourlyWage = parseInt(wageSettings.overtimeWage) || 1500;
+                    const allowancesData = wageSettings.adjustmentAllowances;
+                    const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                    
+                    worksheetData.push(['【課税対象支給額】']);
+                    worksheetData.push(['基本給', `¥${monthlyBaseSalary.toLocaleString()}`]);
+                    worksheetData.push(['残業代', `${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}`]);
+                    
+                    if (allowancesData.length > 0) {
+                        allowancesData.forEach(allowance => {
+                            if (allowance.name || allowance.amount > 0) {
+                                const displayName = allowance.name || '調整手当';
+                                worksheetData.push([displayName, `¥${allowance.amount.toLocaleString()}`]);
+                            }
+                        });
+                    }
+                    
+                    worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
+                    worksheetData.push(['']);
+                    worksheetData.push(['【非課税支給額】']);
+                    worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                }
+                
+                worksheetData.push(
+                    [''],
+                    ['総支給額', `¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}`]
+                );
+
+                // Add headers
+                const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '実働時間', '残業時間', '残業費用'];
+                if (isPartTime) {
+                    headerRow.push('基本給');
+                }
+
+                worksheetData.push([''], ['詳細'], headerRow);
+
+                // Add data rows
+                processedData.forEach(row => {
+                    const dataRow = [
+                        row.date,
+                        row.dayOfWeek,
+                        row.isHolidayWork ? '○' : '',
+                        row.startTime,
+                        row.endTime,
+                        row.breakDuration || '',
+                        row.actualWorkTime,
+                        row.overtimeHours,
+                        row.overtimeCost > 0 ? row.overtimeCost : ''
+                    ];
+
+                    if (isPartTime) {
+                        dataRow.push(row.basicSalary > 0 ? row.basicSalary : '');
+                    }
+
+                    worksheetData.push(dataRow);
+                });
+
+                // Create new worksheet and add to existing workbook
+                const newWorksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+                XLSX.utils.book_append_sheet(importedWorkbook, newWorksheet, sheetName);
+
+                // Generate file name
+                const baseFileName = importedFileName.replace(/\.(xlsx|csv)$/i, '');
+                const newFileName = `${baseFileName}_updated.xlsx`;
+
+                // Save the updated workbook
+                XLSX.writeFile(importedWorkbook, newFileName);
+                
+                showMessage(`既存ファイルに「${sheetName}」シートを追加して保存しました`, 'success');
+
+            } catch (error) {
+                showMessage('ファイルの保存に失敗しました: ' + error.message, 'error');
+                console.error('Export error:', error);
+            }
+        }
+
+        function clearWorkReportSelection() {
+            const fileInput = document.getElementById('workReportFileInput');
+            const statusDiv = document.getElementById('workReportStatus');
+            
+            fileInput.value = '';
+            statusDiv.classList.add('hidden');
+            
+            // Clear imported workbook information
+            importedWorkbook = null;
+            importedFileName = '';
+            hasImportedWorkReport = false;
+            enableAppendExport();
+            
+            showMessage('選択をクリアしました', 'info');
+        }
+
+        function toggleHourlyWage() {
+            const employmentType = document.getElementById('employmentType').value;
+            const fulltimeContainer = document.getElementById('fulltimeWageContainer');
+            const parttimeContainer = document.getElementById('parttimeWageContainer');
+            
+            if (employmentType === 'fulltime') {
+                fulltimeContainer.style.display = 'block';
+                parttimeContainer.style.display = 'none';
+            } else {
+                fulltimeContainer.style.display = 'none';
+                parttimeContainer.style.display = 'block';
+            }
+            
+            if (processedData.length > 0) {
+                processData();
+            }
+        }
+
+        function getClosingDayText() {
+            const closingDate = document.getElementById('closingDate').value;
+            if (closingDate === 'monthEnd') {
+                return '月末';
+            }
+            return closingDate ? `${closingDate}日` : '未設定';
+        }
+
+        function autoCalculatePeriod() {
+            const targetMonth = document.getElementById('targetMonth').value;
+            const closingDate = document.getElementById('closingDate').value;
+            
+            if (!targetMonth) return;
+            
+            const [year, month] = targetMonth.split('-').map(Number);
+            
+            let startDateStr, endDateStr;
+            
+            if (closingDate === 'monthEnd') {
+                // 月末締めの場合：対象年月の1日～対象年月の月末
+                startDateStr = `${year}-${month.toString().padStart(2, '0')}-01`;
+                const lastDay = new Date(year, month, 0).getDate();
+                endDateStr = `${year}-${month.toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
+            } else if (closingDate) {
+                // 日付指定の場合：前月の締め日翌日～当月の締め日
+                const closingDay = parseInt(closingDate);
+                
+                // 終了日：当月の締め日
+                endDateStr = `${year}-${month.toString().padStart(2, '0')}-${closingDay.toString().padStart(2, '0')}`;
+                
+                // 開始日の計算
+                let startYear = year;
+                let startMonth = month - 1;
+                let startDay = closingDay + 1;
+                
+                // 前月の調整
+                if (startMonth === 0) {
+                    startMonth = 12;
+                    startYear = year - 1;
+                }
+                
+                // 前月の最終日を取得
+                const prevMonthLastDay = new Date(startYear, startMonth, 0).getDate();
+                
+                if (closingDay > prevMonthLastDay) {
+                    // 前月に締め日が存在しない場合、当月1日を開始日
+                    startDateStr = `${year}-${month.toString().padStart(2, '0')}-01`;
+                } else if (startDay > prevMonthLastDay) {
+                    // 翌日が月を超える場合、当月1日を開始日
+                    startDateStr = `${year}-${month.toString().padStart(2, '0')}-01`;
+                } else {
+                    // 通常の場合：前月の締め日翌日
+                    startDateStr = `${startYear}-${startMonth.toString().padStart(2, '0')}-${startDay.toString().padStart(2, '0')}`;
+                }
+            } else {
+                return; // 締め日が選択されていない場合は何もしない
+            }
+            
+            // 日付を入力フィールドに設定
+            document.getElementById('periodStartDate').value = startDateStr;
+            document.getElementById('periodEndDate').value = endDateStr;
+            
+            // デバッグ情報をコンソールに出力
+            console.log('Auto calculated period:', { startDateStr, endDateStr });
+            
+            // 期間設定後にデータを自動生成
+            generatePeriodAndMergeData();
+        }
+
+        function calculateRemainingPaidLeave() {
+            const totalDays = parseInt(document.getElementById('totalPaidLeaveDays').value) || 0;
+            const usedDays = parseInt(document.getElementById('usedPaidLeaveDays').value) || 0;
+            const remainingDays = Math.max(0, totalDays - usedDays);
+            
+            document.getElementById('remainingPaidLeaveDays').value = remainingDays;
+        }
+
+        function recalculateIfNeeded() {
+            if (processedData.length > 0) {
+                processData();
+            }
+        }
+
+        function updateDaySetting(day, setting, value) {
+            daySettings[day][setting] = setting === 'breakTime' || setting === 'overtimeRate' ? 
+                                      parseInt(value) || 0 : value;
+            
+            if (allPeriodData.length > 0) {
+                processData();
+            }
+        }
+
+        function applyBulkSettings() {
+            const overtimeStart = document.getElementById('bulkOvertimeStart').value;
+            const breakTime = parseInt(document.getElementById('bulkBreakTime').value) || 60;
+            const overtimeRate = parseInt(document.getElementById('bulkOvertimeRate').value) || 1500;
+
+            const days = ['月', '火', '水', '木', '金', '土', '日'];
+            
+            days.forEach(day => {
+                daySettings[day].overtimeStart = overtimeStart;
+                daySettings[day].breakTime = breakTime;
+                daySettings[day].overtimeRate = overtimeRate;
+                
+                document.getElementById(`overtime-${day}`).value = overtimeStart;
+                document.getElementById(`break-${day}`).value = breakTime;
+                document.getElementById(`rate-${day}`).value = overtimeRate;
+            });
+
+            showMessage('全曜日の設定を更新しました', 'success');
+            
+            if (allPeriodData.length > 0) {
+                processData();
+            }
+        }
+
+        function applyCorrectionTime() {
+            const timeType = document.getElementById('correctionTimeType').value;
+            const baseTime = document.getElementById('correctionBaseTime').value;
+            const newTime = document.getElementById('correctionNewTime').value;
+            const condition = document.getElementById('correctionCondition').value;
+            
+            if (!baseTime) {
+                showMessage('基準時刻を入力してください', 'error');
+                return;
+            }
+
+            if (!newTime) {
+                showMessage('変更後時刻を入力してください', 'error');
+                return;
+            }
+
+            if (allPeriodData.length === 0) {
+                showMessage('先に対象期間を設定してください', 'error');
+                return;
+            }
+
+            const baseMinutes = timeToMinutes(baseTime);
+            const newMinutes = timeToMinutes(newTime);
+            
+            if (baseMinutes === null) {
+                showMessage('有効な基準時刻を入力してください', 'error');
+                return;
+            }
+
+            if (newMinutes === null) {
+                showMessage('有効な変更後時刻を入力してください', 'error');
+                return;
+            }
+
+            let changedCount = 0;
+            let eligibleRows = 0;
+
+            // Apply correction to current period data
+            allPeriodData.forEach((row, index) => {
+                // Check the selected time type
+                const targetTime = row[timeType];
+                
+                if (targetTime && targetTime.trim() !== '' && targetTime !== '---') {
+                    eligibleRows++;
+                    
+                    const targetMinutes = timeToMinutes(targetTime);
+                    if (targetMinutes !== null) {
+                        let shouldChange = false;
+                        
+                        // Check condition: later (遅く) or earlier (早く)
+                        if (condition === 'later' && targetMinutes > baseMinutes) {
+                            shouldChange = true;
+                        } else if (condition === 'earlier' && targetMinutes < baseMinutes) {
+                            shouldChange = true;
+                        }
+                        
+                        if (shouldChange) {
+                            const oldTime = row[timeType];
+                            row[timeType] = newTime;
+                            changedCount++;
+                            
+                            console.log(`Changed row ${index} ${timeType}: ${oldTime} → ${newTime}`);
+                            
+                            // Also update original CSV data if it exists
+                            const originalIndex = originalCsvData.findIndex(orig => 
+                                normalizeDate(orig.date) === normalizeDate(row.date)
+                            );
+                            
+                            if (originalIndex !== -1) {
+                                originalCsvData[originalIndex][timeType] = newTime;
+                            }
+                        }
+                    }
+                }
+            });
+
+            console.log(`Eligible rows: ${eligibleRows}, Changed: ${changedCount}`);
+
+            if (changedCount > 0) {
+                // Update csvData to maintain consistency
+                csvData = [...allPeriodData];
+                
+                // Trigger recalculation
+                processData();
+                
+                const timeTypeName = timeType === 'startTime' ? '出勤時間' : '退勤時間';
+                const conditionText = condition === 'later' ? 'より遅い' : 'より早い';
+                showMessage(`${changedCount}件の${timeTypeName}を${newTime}に変更しました（基準時刻${baseTime}${conditionText}時刻）`, 'success');
+            } else {
+                if (eligibleRows === 0) {
+                    const timeTypeName = timeType === 'startTime' ? '出勤時間' : '退勤時間';
+                    showMessage(`${timeTypeName}が入力されているデータがありません`, 'error');
+                } else {
+                    const timeTypeName = timeType === 'startTime' ? '出勤時間' : '退勤時間';
+                    const conditionText = condition === 'later' ? 'より遅い' : 'より早い';
+                    showMessage(`基準時刻${baseTime}${conditionText}${timeTypeName}がありませんでした`, 'error');
+                }
+            }
+        }
+
+        function handleFile(file) {
+            const fileName = file.name.toLowerCase();
+            
+            if (!fileName.endsWith('.csv') && !fileName.endsWith('.xlsx')) {
+                showMessage('CSV または Excel ファイルを選択してください', 'error');
+                return;
+            }
+
+            if (fileName.endsWith('.xlsx')) {
+                // Handle Excel file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const csvData = XLSX.utils.sheet_to_csv(worksheet);
+                        
+                        parseCSV(csvData);
+                        
+                    } catch (error) {
+                        showMessage('Excelファイルの読み込みに失敗しました: ' + error.message, 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                // Handle CSV file
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        parseCSV(e.target.result);
+                    } catch (error) {
+                        // If Shift_JIS fails, try UTF-8
+                        if (error.message.includes('有効なデータが見つかりません')) {
+                            console.log('Shift_JISでの読み込みに失敗、UTF-8で再試行します');
+                            const utf8Reader = new FileReader();
+                            utf8Reader.onload = function(e2) {
+                                try {
+                                    parseCSV(e2.target.result);
+                                } catch (error2) {
+                                    showMessage('ファイルの読み込みに失敗しました（Shift_JISとUTF-8の両方で試行）: ' + error2.message, 'error');
+                                }
+                            };
+                            utf8Reader.readAsText(file, 'UTF-8');
+                        } else {
+                            showMessage('ファイルの読み込みに失敗しました: ' + error.message, 'error');
+                        }
+                    }
+                };
+                reader.readAsText(file, 'Shift_JIS');
+            }
+        }
+
+        function parseCSV(text) {
+            console.log('Debug: parseCSV開始 - テキスト長:', text.length);
+            const lines = text.split('\n').filter(line => line.trim());
+            console.log('Debug: 処理対象行数:', lines.length);
+            console.log('Debug: 最初の5行:', lines.slice(0, 5));
+            
+            if (lines.length < 1) {
+                showMessage('ファイルが空です', 'error');
+                return;
+            }
+
+            originalCsvData = [];
+            let isExportedFile = false;
+            let employeeSettingsFound = false;
+            
+            // Check if this is an exported work report with employee settings
+            let daySettingsFound = false;
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // Parse employee basic settings
+                if (line.includes('=== 従業員基本設定 ===')) {
+                    isExportedFile = true;
+                    employeeSettingsFound = true;
+                    
+                    // Parse employee settings from exported file
+                    for (let j = i + 1; j < lines.length; j++) {
+                        const settingLine = lines[j].trim();
+                        if (!settingLine || settingLine.includes('===') || settingLine.includes('サマリー')) {
+                            break;
+                        }
+                        
+                        const [key, value] = settingLine.split(',').map(item => item.replace(/"/g, '').trim());
+                        if (key && value) {
+                            switch (key) {
+                                case '氏名':
+                                    document.getElementById('employeeName').value = value;
+                                    break;
+                                case '対象月':
+                                    document.getElementById('targetMonth').value = value;
+                                    break;
+                                case '対象期間':
+                                    // Extract start and end dates from "YYYY-MM-DD ～ YYYY-MM-DD" format
+                                    const periodMatch = value.match(/(\d{4}-\d{2}-\d{2})\s*～\s*(\d{4}-\d{2}-\d{2})/);
+                                    if (periodMatch) {
+                                        document.getElementById('periodStartDate').value = periodMatch[1];
+                                        document.getElementById('periodEndDate').value = periodMatch[2];
+                                    }
+                                    break;
+                                case '勤務形態':
+                                    const employmentType = value === 'パート' ? 'parttime' : 'fulltime';
+                                    document.getElementById('employmentType').value = employmentType;
+                                    toggleHourlyWage(); // Update UI based on employment type
+                                    break;
+                                case '通常時給':
+                                    const regularWage = value.replace(/[円\/時]/g, '').trim();
+                                    if (regularWage) {
+                                        document.getElementById('regularHourlyWage').value = regularWage;
+                                    }
+                                    break;
+                                case '残業時給':
+                                    const overtimeWage = value.replace(/[円\/時]/g, '').trim();
+                                    if (overtimeWage) {
+                                        document.getElementById('overtimeHourlyWage').value = overtimeWage;
+                                    }
+                                    break;
+                                case '有給日数':
+                                    const totalPaidLeave = value.replace(/日/g, '').trim();
+                                    if (totalPaidLeave) {
+                                        document.getElementById('totalPaidLeaveDays').value = totalPaidLeave;
+                                    }
+                                    break;
+                                case '今年度有給取得日':
+                                    const usedPaidLeave = value.replace(/日/g, '').trim();
+                                    if (usedPaidLeave) {
+                                        document.getElementById('usedPaidLeaveDays').value = usedPaidLeave;
+                                        calculateRemainingPaidLeave(); // Update remaining days
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+                
+                // Parse day settings
+                if (line.includes('=== 曜日別詳細設定 ===')) {
+                    daySettingsFound = true;
+                    
+                    // Skip header line
+                    let headerSkipped = false;
+                    for (let j = i + 1; j < lines.length; j++) {
+                        const dayLine = lines[j].trim();
+                        if (!dayLine || dayLine.includes('===') || dayLine.includes('サマリー')) {
+                            break;
+                        }
+                        
+                        // Skip header row (曜日,残業開始時間,休憩時間(分),残業単価(円/時))
+                        if (!headerSkipped && dayLine.includes('曜日') && dayLine.includes('残業開始時間')) {
+                            headerSkipped = true;
+                            continue;
+                        }
+                        
+                        const [day, overtimeStart, breakTime, overtimeRate] = dayLine.split(',').map(item => item.replace(/"/g, '').trim());
+                        
+                        if (day && ['月', '火', '水', '木', '金', '土', '日'].includes(day)) {
+                            daySettings[day] = {
+                                overtimeStart: overtimeStart || '18:00',
+                                breakTime: parseInt(breakTime) || 60,
+                                overtimeRate: parseInt(overtimeRate) || 1500
+                            };
+                            
+                            // Update UI elements
+                            const overtimeInput = document.getElementById(`overtime-${day}`);
+                            const breakInput = document.getElementById(`break-${day}`);
+                            const rateInput = document.getElementById(`rate-${day}`);
+                            
+                            if (overtimeInput) overtimeInput.value = daySettings[day].overtimeStart;
+                            if (breakInput) breakInput.value = daySettings[day].breakTime;
+                            if (rateInput) rateInput.value = daySettings[day].overtimeRate;
+                        }
+                    }
+                }
+            }
+            
+            // Find the start of detailed data
+            let dataStartIndex = 0; // Start from beginning for regular CSV
+            if (isExportedFile) {
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line.includes('日付,曜日') || line.includes('日付,勤務区分')) {
+                        dataStartIndex = i + 1;
+                        break;
+                    }
+                }
+            } else {
+                // For regular CSV, look for header row and start after it
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line.includes('日付') && (line.includes('勤務区分') || line.includes('出勤') || line.includes('時間'))) {
+                        dataStartIndex = i + 1;
+                        break;
+                    }
+                }
+            }
+            console.log('Debug: dataStartIndex:', dataStartIndex);
+            
+            // Parse work data
+            console.log('Debug: データ解析開始 - 開始インデックス:', dataStartIndex);
+            for (let i = dataStartIndex; i < lines.length; i++) {
+                const cells = lines[i].split(',').map(cell => cell.replace(/"/g, '').trim());
+                console.log(`Debug: 行${i}: セル数=${cells.length}, 内容:`, cells.slice(0, 5));
+                
+                // Skip empty lines or summary lines
+                if (cells.length < 3 || !cells[0] || cells[0].includes('=') || cells[0].includes('サマリー') || cells[0].includes('詳細')) {
+                    console.log(`Debug: 行${i}をスキップ - 条件不適合`);
+                    continue;
+                }
+                
+                // More flexible date format check - allow various date formats
+                const dateFormats = [
+                    /^\d{4}-\d{2}-\d{2}$/,     // YYYY-MM-DD
+                    /^\d{4}\/\d{1,2}\/\d{1,2}$/,  // YYYY/MM/DD or YYYY/M/D
+                    /^\d{1,2}\/\d{1,2}\/\d{4}$/,  // MM/DD/YYYY or M/D/YYYY
+                    /^\d{4}\.\d{1,2}\.\d{1,2}$/   // YYYY.MM.DD or YYYY.M.D
+                ];
+                
+                const isValidDate = dateFormats.some(format => format.test(cells[0]));
+                if (!isValidDate && cells[0] !== '日付') { // Skip header row but allow date data
+                    continue;
+                }
+                
+                // Skip header row
+                if (cells[0] === '日付' || cells[0].includes('日付')) {
+                    continue;
+                }
+                
+                if (isExportedFile) {
+                    // Format: 日付,曜日,休日出勤,出勤時間,退勤時間,休憩時間,実働時間,残業時間,残業費用[,基本給]
+                    if (cells.length >= 6) {
+                        originalCsvData.push({
+                            date: cells[0] || '',
+                            workClass: '通常', // Default for exported files
+                            workType: 'フルタイム', // Default for exported files
+                            startTime: cells[3] || '',
+                            endTime: cells[4] || '',
+                            breakTime: cells[5] || '',
+                            breakDuration: cells[5] || '',
+                            overtime: '',
+                            vacation: '',
+                            isHolidayWork: cells[2] === '○'
+                        });
+                    }
+                } else {
+                    // Regular CSV format: 日付,勤務区分,勤務形態,出勤時間,退勤時間,休憩時間,残業時間,有給
+                    // More flexible - allow fewer columns for basic timecard data
+                    if (cells.length >= 5) { // Reduced from 8 to 5 for basic date, start, end time data
+                        originalCsvData.push({
+                            date: cells[0] || '',
+                            workClass: cells[1] || '通常',
+                            workType: cells[2] || 'フルタイム',
+                            startTime: cells[3] || '',
+                            endTime: cells[4] || '',
+                            breakTime: cells[5] || '',
+                            breakDuration: cells[5] || '',
+                            overtime: cells[6] || '',
+                            vacation: cells[7] || '',
+                            isHolidayWork: false
+                        });
+                    }
+                }
+            }
+
+            if (originalCsvData.length === 0) {
+                console.log('Debug: パースしたライン数:', lines.length);
+                console.log('Debug: isExportedFile:', isExportedFile);
+                console.log('Debug: dataStartIndex:', dataStartIndex);
+                console.log('Debug: 最初の数行:', lines.slice(0, 5));
+                
+                showMessage(`有効なデータが見つかりません。CSVファイルの形式を確認してください。\n期待される形式: 日付,勤務区分,勤務形態,出勤時間,退勤時間,休憩時間,残業時間,有給`, 'error');
+                return;
+            }
+
+            let message = `${originalCsvData.length}件のデータを読み込みました`;
+            if (employeeSettingsFound && daySettingsFound) {
+                message = `${originalCsvData.length}件のデータ、従業員基本設定、曜日別詳細設定を読み込みました`;
+            } else if (employeeSettingsFound) {
+                message = `${originalCsvData.length}件のデータと従業員基本設定を読み込みました`;
+            } else if (daySettingsFound) {
+                message = `${originalCsvData.length}件のデータと曜日別詳細設定を読み込みました`;
+            }
+            showMessage(message, 'success');
+            
+            // Merge with period data and process
+            generatePeriodAndMergeData();
+        }
+
+        function processData() {
+            if (!allPeriodData || allPeriodData.length === 0) {
+                return;
+            }
+
+            // Update csvData from allPeriodData to ensure consistency
+            csvData = [...allPeriodData];
+
+            processedData = [];
+            let workDays = 0;
+            let holidayWorkDays = 0;
+            let totalOvertimeMinutes = 0;
+            let totalOvertimeCost = 0;
+            let totalWorkMinutes = 0;
+            let totalBasicSalary = 0;
+
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            
+            // Get wage settings based on employment type
+            let regularHourlyWage, overtimeHourlyWage, monthlyBaseSalary, commutingAllowance, adjustmentAllowancesTotal;
+            if (isPartTime) {
+                regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
+                overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+                commutingAllowance = parseInt(document.getElementById('parttimeCommutingAllowance').value) || 0;
+                adjustmentAllowancesTotal = getAllowancesTotal('parttime');
+            } else {
+                monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
+                overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
+                commutingAllowance = parseInt(document.getElementById('fulltimeCommutingAllowance').value) || 0;
+                adjustmentAllowancesTotal = getAllowancesTotal('fulltime');
+            }
+
+            allPeriodData.forEach((row, index) => {
+                if (!row.date) return;
+
+                const date = new Date(row.date);
+                const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][date.getDay()];
+                
+                let displayStartTime = row.startTime || '';
+                let displayEndTime = row.endTime || '';
+                
+                let actualWorkTime = '';
+                let overtimeHours = '';
+                let overtimeCost = 0;
+                let basicSalary = 0;
+
+                // Only calculate if both start and end times exist
+                if (displayStartTime && displayEndTime && displayStartTime !== '---' && displayEndTime !== '---' && 
+                    displayStartTime !== '' && displayEndTime !== '') {
+                    
+                    // Fixed: Count holiday work and work days separately
+                    if (row.isHolidayWork) {
+                        holidayWorkDays++;
+                    } else {
+                        workDays++;  // Only count as regular work day if NOT holiday work
+                    }
+
+                    const startMinutes = timeToMinutes(displayStartTime);
+                    const endMinutes = timeToMinutes(displayEndTime);
+                    
+                    if (startMinutes !== null && endMinutes !== null && endMinutes > startMinutes) {
+                        // Get break time - prioritize individual row's breakDuration, fallback to day setting
+                        let breakMinutes = 0;
+                        if (row.breakDuration && row.breakDuration !== '' && row.breakDuration !== '---') {
+                            // Convert break duration from various formats to minutes
+                            breakMinutes = parseBreakDuration(row.breakDuration);
+                        } else {
+                            // Fallback to day setting
+                            breakMinutes = parseInt(daySettings[dayOfWeek]?.breakTime) || 60;
+                        }
+                        
+                        // Calculate actual work time (total time - break time)
+                        const totalMinutes = endMinutes - startMinutes;
+                        const actualWorkMinutes = Math.max(0, totalMinutes - breakMinutes);
+                        
+                        if (actualWorkMinutes > 0) {
+                            actualWorkTime = minutesToTime(actualWorkMinutes);
+                            totalWorkMinutes += actualWorkMinutes;
+
+                            // Calculate basic salary for part-time workers
+                            if (isPartTime) {
+                                basicSalary = Math.round((actualWorkMinutes / 60) * regularHourlyWage);
+                                totalBasicSalary += basicSalary;
+                            }
+
+                            // Calculate overtime
+                            const overtimeStartMinutes = timeToMinutes(daySettings[dayOfWeek]?.overtimeStart || '18:00');
+                            if (endMinutes > overtimeStartMinutes) {
+                                const overtimeMinutes = Math.max(0, endMinutes - overtimeStartMinutes);
+                                if (overtimeMinutes > 0) {
+                                    overtimeHours = minutesToTime(overtimeMinutes);
+                                    
+                                    overtimeCost = Math.round((overtimeMinutes / 60) * overtimeHourlyWage);
+                                    
+                                    totalOvertimeMinutes += overtimeMinutes;
+                                    totalOvertimeCost += overtimeCost;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                processedData.push({
+                    index: index,
+                    date: row.date,
+                    dayOfWeek: dayOfWeek,
+                    startTime: displayStartTime,
+                    endTime: displayEndTime,
+                    breakDuration: row.breakDuration || '', // 個別休憩時間を追加
+                    actualWorkTime: actualWorkTime,
+                    overtimeHours: overtimeHours,
+                    overtimeCost: overtimeCost,
+                    basicSalary: basicSalary,
+                    isHolidayWork: row.isHolidayWork || false
+                });
+            });
+
+            // Calculate taxable and non-taxable amounts separately
+            let nonTaxableAmount; // 非課税支給額（通勤手当のみ）
+            if (isPartTime) {
+                // パートの場合：通勤手当（1日あたり）× 出勤日数
+                nonTaxableAmount = commutingAllowance * workDays;
+            } else {
+                // 常勤の場合：通勤手当（月額）
+                nonTaxableAmount = commutingAllowance;
+            }
+            let taxableAmount; // 課税対象支給額
+            
+            if (isPartTime) {
+                taxableAmount = totalBasicSalary + totalOvertimeCost + adjustmentAllowancesTotal;
+            } else {
+                taxableAmount = monthlyBaseSalary + totalOvertimeCost + adjustmentAllowancesTotal;
+            }
+            
+            const finalTotalSalary = taxableAmount + nonTaxableAmount; // 総支給額
+
+            summaryData = {
+                workDays: workDays,
+                holidayWorkDays: holidayWorkDays,
+                totalOvertimeMinutes: totalOvertimeMinutes,
+                totalOvertimeCost: totalOvertimeCost,
+                totalWorkMinutes: totalWorkMinutes,
+                totalBasicSalary: isPartTime ? totalBasicSalary : monthlyBaseSalary,
+                commutingAllowance: commutingAllowance,
+                adjustmentAllowancesTotal: adjustmentAllowancesTotal,
+                taxableAmount: taxableAmount,        // 課税対象支給額
+                nonTaxableAmount: nonTaxableAmount,  // 非課税支給額
+                totalSalary: finalTotalSalary        // 総支給額
+            };
+
+            updateSummary();
+            updateCalculationFormula();
+            updateTable();
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function timeToMinutes(timeStr) {
+            if (!timeStr || timeStr === '---' || timeStr === '') return null;
+            
+            const parts = timeStr.split(':');
+            if (parts.length !== 2) return null;
+            
+            const hours = parseInt(parts[0]);
+            const minutes = parseInt(parts[1]);
+            
+            if (isNaN(hours) || isNaN(minutes)) return null;
+            
+            return hours * 60 + minutes;
+        }
+
+        function minutesToTime(minutes) {
+            if (minutes <= 0) return '';
+            
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            
+            return `${hours}時間${mins.toString().padStart(2, '0')}分`;
+        }
+
+        // 次の月を取得するヘルパー関数
+        function getNextMonth(targetMonth) {
+            // "2024年1月" の形式から次の月を計算
+            const match = targetMonth.match(/(\d{4})年(\d{1,2})月/);
+            if (!match) return targetMonth;
+            
+            let year = parseInt(match[1]);
+            let month = parseInt(match[2]);
+            
+            month++;
+            if (month > 12) {
+                month = 1;
+                year++;
+            }
+            
+            return `${year}年${month}月`;
+        }
+
+        // 対象年月フィールド用の次の月を取得するヘルパー関数
+        function getNextMonthForInput(currentMonth) {
+            // "2024年1月" 形式から "2024-02" 形式に変換
+            const match = currentMonth.match(/(\d{4})年(\d{1,2})月/);
+            if (!match) {
+                // 既に YYYY-MM 形式の場合
+                const [year, month] = currentMonth.split('-').map(Number);
+                let nextMonth = month + 1;
+                let nextYear = year;
+                
+                if (nextMonth > 12) {
+                    nextMonth = 1;
+                    nextYear++;
+                }
+                
+                return `${nextYear}-${nextMonth.toString().padStart(2, '0')}`;
+            }
+            
+            let year = parseInt(match[1]);
+            let month = parseInt(match[2]);
+            
+            month++;
+            if (month > 12) {
+                month = 1;
+                year++;
+            }
+            
+            return `${year}-${month.toString().padStart(2, '0')}`;
+        }
+
+        // 次の月の日付を取得するヘルパー関数
+        function getNextMonthDate(currentDate) {
+            const date = new Date(currentDate);
+            const currentMonth = date.getMonth();
+            const currentYear = date.getFullYear();
+            const currentDay = date.getDate();
+            
+            // 次の月を設定
+            let nextMonth = currentMonth + 1;
+            let nextYear = currentYear;
+            
+            if (nextMonth > 11) {
+                nextMonth = 0;
+                nextYear++;
+            }
+            
+            // 次の月の同じ日を設定（月末の場合は調整）
+            const nextDate = new Date(nextYear, nextMonth, currentDay);
+            
+            // 日付が正しくない場合（例：1/31 → 2/31は2/28になる）、月末に調整
+            if (nextDate.getMonth() !== nextMonth) {
+                nextDate.setDate(0); // 前月の最終日
+            }
+            
+            return nextDate.toISOString().split('T')[0];
+        }
+
+        function updateSummary() {
+            const container = document.getElementById('summaryCards');
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            
+            let summaryHTML = `
+                <div class="summary-card">
+                    <h4 class="text-sm opacity-80 mb-2">出勤日数</h4>
+                    <div class="text-2xl font-bold">${summaryData.workDays}日</div>
+                </div>
+                <div class="summary-card">
+                    <h4 class="text-sm opacity-80 mb-2">休日出勤日数</h4>
+                    <div class="text-2xl font-bold">${summaryData.holidayWorkDays}日</div>
+                </div>
+                <div class="summary-card">
+                    <h4 class="text-sm opacity-80 mb-2">総残業時間</h4>
+                    <div class="text-2xl font-bold">${minutesToTime(summaryData.totalOvertimeMinutes)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4 class="text-sm opacity-80 mb-2">総残業費用</h4>
+                    <div class="text-2xl font-bold">¥${summaryData.totalOvertimeCost.toLocaleString()}</div>
+                </div>
+            `;
+
+            if (!isPartTime) {
+                summaryHTML += `
+                    <div class="summary-card">
+                        <h4 class="text-sm opacity-80 mb-2">総実働時間</h4>
+                        <div class="text-2xl font-bold">${minutesToTime(summaryData.totalWorkMinutes)}</div>
+                    </div>
+                `;
+            }
+            
+            // Add taxable, non-taxable, and total salary cards
+            summaryHTML += `
+                <div class="summary-card" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                    <h4 class="text-sm opacity-80 mb-2">課税対象支給額</h4>
+                    <div class="text-2xl font-bold">¥${summaryData.taxableAmount.toLocaleString()}</div>
+                </div>
+                <div class="summary-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                    <h4 class="text-sm opacity-80 mb-2">非課税支給額</h4>
+                    <div class="text-2xl font-bold">¥${summaryData.nonTaxableAmount.toLocaleString()}</div>
+                </div>
+                <div class="summary-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                    <h4 class="text-sm opacity-80 mb-2">総支給額</h4>
+                    <div class="text-2xl font-bold">¥${summaryData.totalSalary.toLocaleString()}</div>
+                </div>
+            `;
+
+            container.innerHTML = summaryHTML;
+        }
+
+        function updateCalculationFormula() {
+            const container = document.getElementById('calculationFormula');
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            
+            if (summaryData.totalWorkMinutes > 0 || summaryData.totalBasicSalary > 0) {
+                let formulaContent = '';
+                
+                if (isPartTime) {
+                    const regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
+                    const overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+                    const allowancesData = getAllowancesData('parttime');
+                    const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
+                    const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                    
+                    let taxableDisplay = '';
+                    taxableDisplay += `<div class="text-indigo-600 font-semibold">【課税対象支給額】</div>`;
+                    taxableDisplay += `<div>基本給 = ${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}</div>`;
+                    taxableDisplay += `<div>残業代 = ${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}</div>`;
+                    
+                    if (allowancesData.length > 0) {
+                        allowancesData.forEach(allowance => {
+                            if (allowance.name || allowance.amount > 0) {
+                                const displayName = allowance.name || '調整手当';
+                                taxableDisplay += `<div>${displayName} = ¥${allowance.amount.toLocaleString()}</div>`;
+                            }
+                        });
+                    }
+                    
+                    let nonTaxableDisplay = '';
+                    nonTaxableDisplay += `<div class="text-emerald-600 font-semibold mt-2">【非課税支給額】</div>`;
+                    nonTaxableDisplay += `<div>通勤手当合計 = ¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>`;
+                    
+                    formulaContent = `
+                        <div class="space-y-2 font-mono text-sm">
+                            ${taxableDisplay}
+                            <div class="text-indigo-600 font-semibold">課税対象支給額計 = ¥${summaryData.taxableAmount.toLocaleString()}</div>
+                            ${nonTaxableDisplay}
+                            <div class="text-emerald-600 font-semibold">非課税支給額計 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>
+                            <div class="border-t border-white/30 pt-2 font-bold text-lg text-purple-600">
+                                総支給額 = ¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
+                    const overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
+                    const allowancesData = getAllowancesData('fulltime');
+                    const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                    
+                    let taxableDisplay = '';
+                    taxableDisplay += `<div class="text-indigo-600 font-semibold">【課税対象支給額】</div>`;
+                    taxableDisplay += `<div>基本給 = ¥${monthlyBaseSalary.toLocaleString()}</div>`;
+                    taxableDisplay += `<div>残業代 = ${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}</div>`;
+                    
+                    if (allowancesData.length > 0) {
+                        allowancesData.forEach(allowance => {
+                            if (allowance.name || allowance.amount > 0) {
+                                const displayName = allowance.name || '調整手当';
+                                taxableDisplay += `<div>${displayName} = ¥${allowance.amount.toLocaleString()}</div>`;
+                            }
+                        });
+                    }
+                    
+                    let nonTaxableDisplay = '';
+                    nonTaxableDisplay += `<div class="text-emerald-600 font-semibold mt-2">【非課税支給額】</div>`;
+                    nonTaxableDisplay += `<div>通勤手当合計 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>`;
+                    
+                    formulaContent = `
+                        <div class="space-y-2 font-mono text-sm">
+                            ${taxableDisplay}
+                            <div class="text-indigo-600 font-semibold">課税対象支給額計 = ¥${summaryData.taxableAmount.toLocaleString()}</div>
+                            ${nonTaxableDisplay}
+                            <div class="text-emerald-600 font-semibold">非課税支給額計 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>
+                            <div class="border-t border-white/30 pt-2 font-bold text-lg text-purple-600">
+                                総支給額 = ¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                container.innerHTML = `
+                    <div class="calculation-box">
+                        <h4 class="text-xl font-bold mb-4 flex items-center">
+                            <i class="fas fa-calculator mr-2"></i>総支給額計算式
+                        </h4>
+                        ${formulaContent}
+                    </div>
+                `;
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function updateTable() {
+            const table = document.getElementById('resultsTable');
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            
+            let tableHTML = `
+                <thead class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+                    <tr>
+                        <th class="px-4 py-3 text-center">日付</th>
+                        <th class="px-4 py-3 text-center">曜日</th>
+                        <th class="px-4 py-3 text-center">休日出勤</th>
+                        <th class="px-4 py-3 text-center">出勤時間</th>
+                        <th class="px-4 py-3 text-center">退勤時間</th>
+                        <th class="px-4 py-3 text-center">休憩時間</th>
+                        <th class="px-4 py-3 text-center">実働時間</th>
+                        <th class="px-4 py-3 text-center">残業時間</th>
+                        <th class="px-4 py-3 text-center">残業費用</th>
+            `;
+
+            if (isPartTime) {
+                tableHTML += '<th class="px-4 py-3 text-center">基本給</th>';
+            }
+
+            tableHTML += `
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            processedData.forEach((row, index) => {
+                const bgClass = index % 2 === 0 ? 'bg-gray-50' : 'bg-white';
+                const startTimeDisplay = row.startTime || '';
+                const endTimeDisplay = row.endTime || '';
+                
+                // Determine CSS class based on whether time is set or not
+                const startTimeClass = startTimeDisplay ? 'editable-time' : 'editable-time-unset';
+                const endTimeClass = endTimeDisplay ? 'editable-time' : 'editable-time-unset';
+                const startTimeText = startTimeDisplay || '未設定';
+                const endTimeText = endTimeDisplay || '未設定';
+                
+                tableHTML += `
+                    <tr class="${bgClass} hover:bg-blue-50 transition-colors">
+                        <td class="px-4 py-3 text-center">${row.date}</td>
+                        <td class="px-4 py-3 text-center">${row.dayOfWeek}</td>
+                        <td class="px-4 py-3 text-center">
+                            <input type="checkbox" class="holiday-checkbox" data-row="${row.index}" onchange="updateHolidayWork(this)" ${row.isHolidayWork ? 'checked' : ''}>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="${startTimeClass}" data-row="${row.index}" data-field="startTime" onclick="editTime(this)" title="クリックして時間を編集">${startTimeText}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="${endTimeClass}" data-row="${row.index}" data-field="endTime" onclick="editTime(this)" title="クリックして時間を編集">${endTimeText}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="${row.breakDuration ? 'editable-time' : 'editable-time-unset'}" data-row="${row.index}" data-field="breakDuration" onclick="editBreakDuration(this)" title="クリックして休憩時間を編集">${row.breakDuration || '未設定'}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">${row.actualWorkTime}</td>
+                        <td class="px-4 py-3 text-center">${row.overtimeHours}</td>
+                        <td class="px-4 py-3 text-center">${row.overtimeCost > 0 ? '¥' + row.overtimeCost.toLocaleString() : ''}</td>
+                `;
+
+                if (isPartTime) {
+                    tableHTML += `<td class="px-4 py-3 text-center">${row.basicSalary > 0 ? '¥' + row.basicSalary.toLocaleString() : ''}</td>`;
+                }
+
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody>';
+            table.innerHTML = tableHTML;
+        }
+
+        function updateHolidayWork(checkbox) {
+            const rowIndex = parseInt(checkbox.dataset.row);
+            
+            if (rowIndex >= 0 && rowIndex < allPeriodData.length) {
+                allPeriodData[rowIndex].isHolidayWork = checkbox.checked;
+                
+                // Update csvData to maintain consistency
+                csvData = [...allPeriodData];
+                
+                // Trigger recalculation
+                processData();
+                
+                const dateStr = allPeriodData[rowIndex].date;
+                const status = checkbox.checked ? 'ON' : 'OFF';
+                showMessage(`${dateStr} の休日出勤を${status}に設定しました`, 'success');
+            }
+        }
+
+        // Enhanced manual editing functionality with proper calculation linking
+        function editTime(element) {
+            const currentValue = element.textContent.trim();
+            const displayValue = currentValue === '未設定' ? '' : currentValue;
+            
+            // Create simple time input
+            const input = document.createElement('input');
+            input.type = 'time';
+            input.value = displayValue;
+            input.className = 'time-input';
+            
+            // Add event listeners for simple interaction
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveTimeEdit(element, this.value);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelTimeEdit(element, currentValue);
+                }
+            });
+            
+            input.addEventListener('blur', function(e) {
+                // Small delay to prevent conflicts
+                setTimeout(() => {
+                    if (document.contains(this)) {
+                        saveTimeEdit(element, this.value);
+                    }
+                }, 100);
+            });
+            
+            // Replace element content with input
+            element.innerHTML = '';
+            element.appendChild(input);
+            
+            // Focus and select
+            input.focus();
+            input.select();
+        }
+
+        function saveTimeEdit(element, newValue) {
+            const rowIndex = parseInt(element.dataset.row);
+            const field = element.dataset.field;
+            
+            // Validate row index
+            if (rowIndex < 0 || rowIndex >= allPeriodData.length) {
+                showMessage('データの更新に失敗しました: 無効な行インデックス', 'error');
+                cancelTimeEdit(element, element.textContent || '未設定');
+                return;
+            }
+            
+            // Update data in allPeriodData (primary data source)
+            if (allPeriodData[rowIndex] !== undefined) {
+                const oldValue = allPeriodData[rowIndex][field];
+                allPeriodData[rowIndex][field] = newValue;
+                
+                // Also update original CSV data if it exists
+                const normalizeDate = (dateStr) => {
+                    if (!dateStr) return '';
+                    
+                    if (dateStr.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                        const parts = dateStr.split('/');
+                        return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                    } else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                        const parts = dateStr.split('/');
+                        return parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+                    } else if (dateStr.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                        const parts = dateStr.split('-');
+                        return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                    }
+                    return dateStr;
+                };
+                
+                const originalRow = originalCsvData.find(row => {
+                    return normalizeDate(row.date) === normalizeDate(allPeriodData[rowIndex].date);
+                });
+                
+                if (originalRow) {
+                    originalRow[field] = newValue;
+                }
+                
+                // Update csvData to maintain consistency
+                csvData = [...allPeriodData];
+                
+                try {
+                    // Trigger full recalculation
+                    processData();
+                    
+                    // Show confirmation message
+                    const fieldName = field === 'startTime' ? '出勤時間' : '退勤時間';
+                    const timeDisplay = newValue || '未設定';
+                    showMessage(`✅ ${allPeriodData[rowIndex].date} の${fieldName}を「${timeDisplay}」に更新しました`, 'success');
+                    
+                } catch (error) {
+                    // Rollback on error
+                    allPeriodData[rowIndex][field] = oldValue;
+                    if (originalRow) {
+                        originalRow[field] = oldValue;
+                    }
+                    csvData = [...allPeriodData];
+                    processData();
+                    
+                    showMessage('計算中にエラーが発生しました: ' + error.message, 'error');
+                }
+                
+            } else {
+                showMessage('データの更新に失敗しました: データが見つかりません', 'error');
+                cancelTimeEdit(element, element.textContent || '未設定');
+            }
+        }
+
+        function cancelTimeEdit(element, originalValue) {
+            element.innerHTML = originalValue;
+        }
+
+        function exportToExcel() {
+            if (processedData.length === 0) {
+                showMessage('エクスポートするデータがありません', 'error');
+                return;
+            }
+
+            // Get employee basic settings
+            const employeeName = document.getElementById('employeeName').value || '従業員';
+            const targetMonth = document.getElementById('targetMonth').value;
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            const employmentType = isPartTime ? 'パート' : '常勤';
+            
+            // Get wage and allowance settings based on employment type
+            let wageSettings = {};
+            try {
+                if (isPartTime) {
+                    wageSettings = {
+                        regularWage: document.getElementById('regularHourlyWage').value,
+                        overtimeWage: document.getElementById('overtimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('parttime') || []
+                    };
+                } else {
+                    wageSettings = {
+                        baseSalary: document.getElementById('baseSalary').value,
+                        overtimeWage: document.getElementById('fulltimeOvertimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('fulltime') || []
+                    };
+                }
+            } catch (error) {
+                console.error('Error getting wage settings for Excel:', error);
+                showMessage('Excelエクスポート中にエラーが発生しました: ' + error.message, 'error');
+                return;
+            }
+            
+            const totalPaidLeave = document.getElementById('totalPaidLeaveDays').value;
+            const usedPaidLeave = document.getElementById('usedPaidLeaveDays').value;
+            const remainingPaidLeave = document.getElementById('remainingPaidLeaveDays').value;
+            const startDate = document.getElementById('periodStartDate').value;
+            const endDate = document.getElementById('periodEndDate').value;
+            const fileName = `${employeeName}_${targetMonth.replace('-', '')}_勤務実績表.xlsx`;
+
+            const workbook = XLSX.utils.book_new();
+            
+            // Create worksheet data with employee basic settings
+            const worksheetData = [
+                ['勤務実績表'],
+                [''],
+                ['=== 従業員基本設定 ==='],
+                ['氏名', employeeName],
+                ['対象月', targetMonth],
+                ['対象期間', `${startDate} ～ ${endDate}`],
+                ['勤務形態', employmentType],
+                ['締め日', getClosingDayText()]
+            ];
+            
+            // Add wage settings based on employment type
+            if (isPartTime) {
+                worksheetData.push(
+                    ['時給', wageSettings.regularWage + '円/時'],
+                    ['残業時給', wageSettings.overtimeWage + '円/時'],
+                    ['通勤手当', wageSettings.commutingAllowance + '円']
+                );
+                // Add multiple adjustment allowances
+                wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                    if (allowance.name || allowance.amount > 0) {
+                        worksheetData.push(
+                            [`調整手当${index + 1}名`, allowance.name],
+                            [`調整手当${index + 1}額`, allowance.amount + '円']
+                        );
+                    }
+                });
+            } else {
+                worksheetData.push(
+                    ['基本給', wageSettings.baseSalary + '円/月'],
+                    ['残業時給', wageSettings.overtimeWage + '円/時'],
+                    ['通勤手当', wageSettings.commutingAllowance + '円']
+                );
+                // Add multiple adjustment allowances
+                wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                    if (allowance.name || allowance.amount > 0) {
+                        worksheetData.push(
+                            [`調整手当${index + 1}名`, allowance.name],
+                            [`調整手当${index + 1}額`, allowance.amount + '円']
+                        );
+                    }
+                });
+            }
+            
+            // Add paid leave settings
+            worksheetData.push(
+                ['有給日数', totalPaidLeave + '日'],
+                ['今年度有給取得日', usedPaidLeave + '日'],
+                ['残り有給日数', remainingPaidLeave + '日'],
+                [''],
+                ['=== 曜日別詳細設定 ==='],
+                ['曜日', '残業開始時間', '休憩時間(分)', '残業単価(円/時)']
+            );
+
+            // Add day settings data
+            const days = ['月', '火', '水', '木', '金', '土', '日'];
+            days.forEach(day => {
+                worksheetData.push([
+                    day,
+                    daySettings[day].overtimeStart,
+                    daySettings[day].breakTime,
+                    daySettings[day].overtimeRate
+                ]);
+            });
+
+            worksheetData.push(['']);
+
+            worksheetData.push(
+                [''],
+                ['サマリー'],
+                ['出勤日数', summaryData.workDays + '日'],
+                ['休日出勤日数', summaryData.holidayWorkDays + '日'],
+                ['総残業時間', minutesToTime(summaryData.totalOvertimeMinutes)],
+                ['総残業費用', '¥' + summaryData.totalOvertimeCost.toLocaleString()]
+            );
+
+            if (!isPartTime) {
+                worksheetData.push(['総実働時間', minutesToTime(summaryData.totalWorkMinutes)]);
+            }
+            
+            // Add taxable/non-taxable breakdown
+            worksheetData.push(
+                [''],
+                ['課税対象支給額', '¥' + summaryData.taxableAmount.toLocaleString()],
+                ['非課税支給額', '¥' + summaryData.nonTaxableAmount.toLocaleString()],
+                ['総支給額', '¥' + summaryData.totalSalary.toLocaleString()]
+            );
+
+            // Add detailed salary calculation formula
+            worksheetData.push(
+                [''],
+                ['=== 総支給額計算式 ===']
+            );
+            
+            // Add calculation details based on employment type
+            if (isPartTime) {
+                const regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
+                const overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+                const allowancesData = getAllowancesData('parttime');
+                const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
+                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                
+                worksheetData.push(['【課税対象支給額】']);
+                worksheetData.push(['基本給', `${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}`]);
+                worksheetData.push(['残業代', `${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}`]);
+                
+                if (allowancesData.length > 0) {
+                    allowancesData.forEach(allowance => {
+                        if (allowance.name || allowance.amount > 0) {
+                            const displayName = allowance.name || '調整手当';
+                            worksheetData.push([displayName, `¥${allowance.amount.toLocaleString()}`]);
+                        }
+                    });
+                }
+                
+                worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
+                worksheetData.push(['']);
+                worksheetData.push(['【非課税支給額】']);
+                worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+            } else {
+                const monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
+                const overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
+                const allowancesData = getAllowancesData('fulltime');
+                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                
+                worksheetData.push(['【課税対象支給額】']);
+                worksheetData.push(['基本給', `¥${monthlyBaseSalary.toLocaleString()}`]);
+                worksheetData.push(['残業代', `${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}`]);
+                
+                if (allowancesData.length > 0) {
+                    allowancesData.forEach(allowance => {
+                        if (allowance.name || allowance.amount > 0) {
+                            const displayName = allowance.name || '調整手当';
+                            worksheetData.push([displayName, `¥${allowance.amount.toLocaleString()}`]);
+                        }
+                    });
+                }
+                
+                worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
+                worksheetData.push(['']);
+                worksheetData.push(['【非課税支給額】']);
+                worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+            }
+            
+            worksheetData.push(
+                [''],
+                ['総支給額', `¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}`]
+            );
+
+            // Add headers
+            const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '実働時間', '残業時間', '残業費用'];
+            if (isPartTime) {
+                headerRow.push('基本給');
+            }
+
+            worksheetData.push([''], ['詳細'], headerRow);
+
+            // Add data rows
+            processedData.forEach(row => {
+                const dataRow = [
+                    row.date,
+                    row.dayOfWeek,
+                    row.isHolidayWork ? '○' : '',
+                    row.startTime,
+                    row.endTime,
+                    row.breakDuration || '',
+                    row.actualWorkTime,
+                    row.overtimeHours,
+                    row.overtimeCost > 0 ? row.overtimeCost : ''
+                ];
+
+                if (isPartTime) {
+                    dataRow.push(row.basicSalary > 0 ? row.basicSalary : '');
+                }
+
+                worksheetData.push(dataRow);
+            });
+
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            XLSX.utils.book_append_sheet(workbook, worksheet, '勤務実績表');
+            XLSX.writeFile(workbook, fileName);
+            
+            showMessage('Excelファイルをエクスポートしました', 'success');
+        }
+
+        function exportToCSV() {
+            if (processedData.length === 0) {
+                showMessage('エクスポートするデータがありません', 'error');
+                return;
+            }
+
+            // Get employee basic settings
+            const employeeName = document.getElementById('employeeName').value || '従業員';
+            const targetMonth = document.getElementById('targetMonth').value;
+            const isPartTime = document.getElementById('employmentType').value === 'parttime';
+            const employmentType = isPartTime ? 'パート' : '常勤';
+            
+            // Get wage and allowance settings based on employment type
+            let wageSettings = {};
+            try {
+                if (isPartTime) {
+                    wageSettings = {
+                        regularWage: document.getElementById('regularHourlyWage').value,
+                        overtimeWage: document.getElementById('overtimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('parttime') || []
+                    };
+                } else {
+                    wageSettings = {
+                        baseSalary: document.getElementById('baseSalary').value,
+                        overtimeWage: document.getElementById('fulltimeOvertimeHourlyWage').value,
+                        commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                        adjustmentAllowances: getAllowancesData('fulltime') || []
+                    };
+                }
+            } catch (error) {
+                console.error('Error getting wage settings for CSV:', error);
+                showMessage('CSVエクスポート中にエラーが発生しました: ' + error.message, 'error');
+                return;
+            }
+            
+            const totalPaidLeave = document.getElementById('totalPaidLeaveDays').value;
+            const usedPaidLeave = document.getElementById('usedPaidLeaveDays').value;
+            const remainingPaidLeave = document.getElementById('remainingPaidLeaveDays').value;
+            const startDate = document.getElementById('periodStartDate').value;
+            const endDate = document.getElementById('periodEndDate').value;
+            const fileName = `${employeeName}_${targetMonth.replace('-', '')}_勤務実績表.csv`;
+
+            let csvContent = '\ufeff'; // BOM for UTF-8
+            
+            // Add employee basic settings
+            csvContent += '勤務実績表\n';
+            csvContent += '\n';
+            csvContent += '=== 従業員基本設定 ===\n';
+            csvContent += `氏名,${employeeName}\n`;
+            csvContent += `対象月,${targetMonth}\n`;
+            csvContent += `対象期間,${startDate} ～ ${endDate}\n`;
+            csvContent += `勤務形態,${employmentType}\n`;
+            csvContent += `締め日,${getClosingDayText()}\n`;
+            
+            // Add wage settings based on employment type
+            if (isPartTime) {
+                csvContent += `時給,${wageSettings.regularWage}円/時\n`;
+                csvContent += `残業時給,${wageSettings.overtimeWage}円/時\n`;
+                csvContent += `通勤手当,${wageSettings.commutingAllowance}円\n`;
+                // Add multiple adjustment allowances
+                wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                    if (allowance.name || allowance.amount > 0) {
+                        csvContent += `調整手当${index + 1}名,${allowance.name}\n`;
+                        csvContent += `調整手当${index + 1}額,${allowance.amount}円\n`;
+                    }
+                });
+            } else {
+                csvContent += `基本給,${wageSettings.baseSalary}円/月\n`;
+                csvContent += `残業時給,${wageSettings.overtimeWage}円/時\n`;
+                csvContent += `通勤手当,${wageSettings.commutingAllowance}円\n`;
+                // Add multiple adjustment allowances
+                wageSettings.adjustmentAllowances.forEach((allowance, index) => {
+                    if (allowance.name || allowance.amount > 0) {
+                        csvContent += `調整手当${index + 1}名,${allowance.name}\n`;
+                        csvContent += `調整手当${index + 1}額,${allowance.amount}円\n`;
+                    }
+                });
+            }
+            
+            csvContent += `有給日数,${totalPaidLeave}日\n`;
+            csvContent += `今年度有給取得日,${usedPaidLeave}日\n`;
+            csvContent += `残り有給日数,${remainingPaidLeave}日\n`;
+            
+            // Add day settings
+            csvContent += '\n';
+            csvContent += '=== 曜日別詳細設定 ===\n';
+            csvContent += '曜日,残業開始時間,休憩時間(分),残業単価(円/時)\n';
+            
+            const days = ['月', '火', '水', '木', '金', '土', '日'];
+            days.forEach(day => {
+                csvContent += `${day},${daySettings[day].overtimeStart},${daySettings[day].breakTime},${daySettings[day].overtimeRate}\n`;
+            });
+            
+            csvContent += '\n';
+            csvContent += 'サマリー\n';
+            csvContent += `出勤日数,${summaryData.workDays}日\n`;
+            csvContent += `休日出勤日数,${summaryData.holidayWorkDays}日\n`;
+            csvContent += `総残業時間,${minutesToTime(summaryData.totalOvertimeMinutes)}\n`;
+            csvContent += `総残業費用,¥${summaryData.totalOvertimeCost.toLocaleString()}\n`;
+            
+            if (!isPartTime) {
+                csvContent += `総実働時間,${minutesToTime(summaryData.totalWorkMinutes)}\n`;
+            }
+            
+            // Add taxable/non-taxable breakdown
+            csvContent += '\n';
+            csvContent += `課税対象支給額,¥${summaryData.taxableAmount.toLocaleString()}\n`;
+            csvContent += `非課税支給額,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+            csvContent += `総支給額,¥${summaryData.totalSalary.toLocaleString()}\n`;
+
+            // Add detailed salary calculation formula
+            csvContent += '\n';
+            csvContent += '=== 総支給額計算式 ===\n';
+            
+            // Add calculation details based on employment type
+            if (isPartTime) {
+                const regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
+                const overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
+                const allowancesData = getAllowancesData('parttime');
+                const totalHours = (summaryData.totalWorkMinutes / 60).toFixed(2);
+                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                
+                csvContent += '【課税対象支給額】\n';
+                csvContent += `基本給,${totalHours}時間 × ${regularHourlyWage}円 = ¥${summaryData.totalBasicSalary.toLocaleString()}\n`;
+                csvContent += `残業代,${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}\n`;
+                
+                if (allowancesData.length > 0) {
+                    allowancesData.forEach(allowance => {
+                        if (allowance.name || allowance.amount > 0) {
+                            const displayName = allowance.name || '調整手当';
+                            csvContent += `${displayName},¥${allowance.amount.toLocaleString()}\n`;
+                        }
+                    });
+                }
+                
+                csvContent += `課税対象支給額計,¥${summaryData.taxableAmount.toLocaleString()}\n`;
+                csvContent += '\n';
+                csvContent += '【非課税支給額】\n';
+                csvContent += `通勤手当合計,¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                csvContent += `非課税支給額計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+            } else {
+                const monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
+                const overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
+                const allowancesData = getAllowancesData('fulltime');
+                const overtimeHours = (summaryData.totalOvertimeMinutes / 60).toFixed(2);
+                
+                csvContent += '【課税対象支給額】\n';
+                csvContent += `基本給,¥${monthlyBaseSalary.toLocaleString()}\n`;
+                csvContent += `残業代,${overtimeHours}時間 × ${overtimeHourlyWage}円 = ¥${summaryData.totalOvertimeCost.toLocaleString()}\n`;
+                
+                if (allowancesData.length > 0) {
+                    allowancesData.forEach(allowance => {
+                        if (allowance.name || allowance.amount > 0) {
+                            const displayName = allowance.name || '調整手当';
+                            csvContent += `${displayName},¥${allowance.amount.toLocaleString()}\n`;
+                        }
+                    });
+                }
+                
+                csvContent += `課税対象支給額計,¥${summaryData.taxableAmount.toLocaleString()}\n`;
+                csvContent += '\n';
+                csvContent += '【非課税支給額】\n';
+                csvContent += `通勤手当合計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                csvContent += `非課税支給額計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+            }
+            
+            csvContent += '\n';
+            csvContent += `総支給額,¥${summaryData.taxableAmount.toLocaleString()} + ¥${summaryData.nonTaxableAmount.toLocaleString()} = ¥${summaryData.totalSalary.toLocaleString()}\n`;
+            
+            csvContent += '\n';
+            csvContent += '詳細\n';
+            
+            // Add headers
+            let headerLine = '日付,曜日,休日出勤,出勤時間,退勤時間,休憩時間,実働時間,残業時間,残業費用';
+            if (isPartTime) {
+                headerLine += ',基本給';
+            }
+            csvContent += headerLine + '\n';
+
+            // Add data
+            processedData.forEach(row => {
+                let dataLine = [
+                    row.date,
+                    row.dayOfWeek,
+                    row.isHolidayWork ? '○' : '',
+                    row.startTime,
+                    row.endTime,
+                    row.breakDuration || '',
+                    row.actualWorkTime,
+                    row.overtimeHours,
+                    row.overtimeCost > 0 ? row.overtimeCost : ''
+                ];
+
+                if (isPartTime) {
+                    dataLine.push(row.basicSalary > 0 ? row.basicSalary : '');
+                }
+
+                csvContent += dataLine.join(',') + '\n';
+            });
+
+            // Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage('CSVファイルをエクスポートしました', 'success');
+        }
+
+        // 休憩時間の編集機能
+        function editBreakDuration(element) {
+            const currentValue = element.textContent.trim();
+            const displayValue = currentValue === '未設定' ? '' : currentValue;
+            
+            // Create input for break duration
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = displayValue;
+            input.className = 'time-input';
+            input.placeholder = '例: 60分, 1時間30分';
+            
+            // Add event listeners
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveBreakDurationEdit(element, this.value);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelBreakDurationEdit(element, currentValue);
+                }
+            });
+            
+            input.addEventListener('blur', function(e) {
+                setTimeout(() => {
+                    if (document.contains(this)) {
+                        saveBreakDurationEdit(element, this.value);
+                    }
+                }, 100);
+            });
+            
+            // Replace element content with input
+            element.innerHTML = '';
+            element.appendChild(input);
+            
+            // Focus and select
+            input.focus();
+            input.select();
+        }
+
+        function saveBreakDurationEdit(element, newValue) {
+            const rowIndex = parseInt(element.dataset.row);
+            const field = element.dataset.field;
+            
+            // Validate row index
+            if (rowIndex < 0 || rowIndex >= allPeriodData.length) {
+                showMessage('データの更新に失敗しました: 無効な行インデックス', 'error');
+                cancelBreakDurationEdit(element, element.textContent || '未設定');
+                return;
+            }
+            
+            // Update data
+            if (allPeriodData[rowIndex] !== undefined) {
+                const oldValue = allPeriodData[rowIndex][field];
+                allPeriodData[rowIndex][field] = newValue;
+                
+                // Also update original CSV data if it exists
+                const originalRow = originalCsvData.find(row => 
+                    normalizeDate(row.date) === normalizeDate(allPeriodData[rowIndex].date)
+                );
+                
+                if (originalRow) {
+                    originalRow.breakDuration = newValue;
+                    originalRow.breakTime = newValue; // Keep both for compatibility
+                }
+                
+                // Update csvData to maintain consistency
+                csvData = [...allPeriodData];
+                
+                try {
+                    // Trigger full recalculation
+                    processData();
+                    
+                    // Show confirmation message
+                    const timeDisplay = newValue || '未設定';
+                    showMessage(`✅ ${allPeriodData[rowIndex].date} の休憩時間を「${timeDisplay}」に更新しました`, 'success');
+                    
+                } catch (error) {
+                    // Rollback on error
+                    allPeriodData[rowIndex][field] = oldValue;
+                    if (originalRow) {
+                        originalRow.breakDuration = oldValue;
+                        originalRow.breakTime = oldValue;
+                    }
+                    csvData = [...allPeriodData];
+                    processData();
+                    
+                    showMessage('計算中にエラーが発生しました: ' + error.message, 'error');
+                }
+                
+            } else {
+                showMessage('データの更新に失敗しました: データが見つかりません', 'error');
+                cancelBreakDurationEdit(element, element.textContent || '未設定');
+            }
+        }
+
+        function cancelBreakDurationEdit(element, originalValue) {
+            element.innerHTML = originalValue;
+        }
+
+        // 日付正規化のヘルパー関数
+        function normalizeDate(dateStr) {
+            if (!dateStr) return '';
+            
+            if (dateStr.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                const parts = dateStr.split('/');
+                return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+            } else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                const parts = dateStr.split('/');
+                return parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+            } else if (dateStr.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                const parts = dateStr.split('-');
+                return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+            }
+            return dateStr;
+        }
+
+        // 休憩時間を分に変換する関数
+        function parseBreakDuration(breakStr) {
+            if (!breakStr || breakStr === '' || breakStr === '---') return 0;
+            
+            breakStr = breakStr.toString().toLowerCase();
+            let totalMinutes = 0;
+            
+            // Handle various formats
+            // 例: "60分", "1時間30分", "90", "1.5時間"
+            
+            // 時間と分が含まれている場合 (例: "1時間30分")
+            const hoursAndMinutesMatch = breakStr.match(/(\d+(?:\.\d+)?)\s*時間\s*(\d+)\s*分/);
+            if (hoursAndMinutesMatch) {
+                const hours = parseFloat(hoursAndMinutesMatch[1]);
+                const minutes = parseInt(hoursAndMinutesMatch[2]);
+                return Math.round(hours * 60 + minutes);
+            }
+            
+            // 時間のみ (例: "1時間", "1.5時間")
+            const hoursOnlyMatch = breakStr.match(/(\d+(?:\.\d+)?)\s*時間/);
+            if (hoursOnlyMatch) {
+                const hours = parseFloat(hoursOnlyMatch[1]);
+                return Math.round(hours * 60);
+            }
+            
+            // 分のみ (例: "60分")
+            const minutesOnlyMatch = breakStr.match(/(\d+)\s*分/);
+            if (minutesOnlyMatch) {
+                return parseInt(minutesOnlyMatch[1]);
+            }
+            
+            // 数字のみ（分として扱う）
+            const numberMatch = breakStr.match(/^(\d+(?:\.\d+)?)$/);
+            if (numberMatch) {
+                return Math.round(parseFloat(numberMatch[1]));
+            }
+            
+            return 0;
+        }
+
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            
+            // Remove existing messages
+            const existingMessage = container.querySelector('.message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transition-all duration-300 ${
+                type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'
+            }`;
+            
+            messageDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+
+            container.appendChild(messageDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Multiple Allowances Functions
+        function addFulltimeAllowance() {
+            const container = document.getElementById('fulltimeAllowancesList');
+            const newRow = document.createElement('div');
+            newRow.className = 'allowance-row grid grid-cols-1 sm:grid-cols-3 gap-2 items-end';
+            newRow.innerHTML = `
+                <div>
+                    <input type="text" placeholder="手当名" onchange="recalculateIfNeeded()" class="allowance-name w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <input type="number" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="allowance-amount w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <button type="button" onclick="removeFulltimeAllowance(this)" class="bg-red-500 text-white px-2 py-2 rounded text-sm hover:bg-red-600 transition-colors w-full">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+            updateAllowanceDeleteButtons('fulltime');
+        }
+
+        function removeFulltimeAllowance(button) {
+            button.closest('.allowance-row').remove();
+            updateAllowanceDeleteButtons('fulltime');
+            recalculateIfNeeded();
+        }
+
+        function addParttimeAllowance() {
+            const container = document.getElementById('parttimeAllowancesList');
+            const newRow = document.createElement('div');
+            newRow.className = 'allowance-row grid grid-cols-1 sm:grid-cols-3 gap-2 items-end';
+            newRow.innerHTML = `
+                <div>
+                    <input type="text" placeholder="手当名" onchange="recalculateIfNeeded()" class="allowance-name w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <input type="number" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="allowance-amount w-full px-3 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm">
+                </div>
+                <div>
+                    <button type="button" onclick="removeParttimeAllowance(this)" class="bg-red-500 text-white px-2 py-2 rounded text-sm hover:bg-red-600 transition-colors w-full">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+            updateAllowanceDeleteButtons('parttime');
+        }
+
+        function removeParttimeAllowance(button) {
+            button.closest('.allowance-row').remove();
+            updateAllowanceDeleteButtons('parttime');
+            recalculateIfNeeded();
+        }
+
+        function updateAllowanceDeleteButtons(type) {
+            const container = document.getElementById(type === 'fulltime' ? 'fulltimeAllowancesList' : 'parttimeAllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            
+            rows.forEach((row, index) => {
+                const deleteButton = row.querySelector('button');
+                if (rows.length === 1) {
+                    deleteButton.style.display = 'none';
+                } else {
+                    deleteButton.style.display = 'block';
+                }
+            });
+        }
+
+        function getAllowancesTotal(type) {
+            const container = document.getElementById(type === 'fulltime' ? 'fulltimeAllowancesList' : 'parttimeAllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            let total = 0;
+            
+            rows.forEach(row => {
+                const amountInput = row.querySelector('.allowance-amount');
+                const amount = parseInt(amountInput.value) || 0;
+                total += amount;
+            });
+            
+            return total;
+        }
+
+        function getAllowancesData(type) {
+            const container = document.getElementById(type === 'fulltime' ? 'fulltimeAllowancesList' : 'parttimeAllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            const allowances = [];
+            
+            rows.forEach(row => {
+                const nameInput = row.querySelector('.allowance-name');
+                const amountInput = row.querySelector('.allowance-amount');
+                const name = nameInput.value.trim();
+                const amount = parseInt(amountInput.value) || 0;
+                
+                if (name || amount > 0) {
+                    allowances.push({ name: name, amount: amount });
+                }
+            });
+            
+            return allowances;
+        }
+
+        function setAllowanceName(empType, index, name) {
+            const containerType = empType === 'parttime' ? 'parttime' : 'fulltime';
+            const container = document.getElementById(containerType + 'AllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            
+            // Add rows if necessary
+            while (rows.length <= index) {
+                if (containerType === 'parttime') {
+                    addParttimeAllowance();
+                } else {
+                    addFulltimeAllowance();
+                }
+            }
+            
+            // Update the name
+            const targetRow = container.querySelectorAll('.allowance-row')[index];
+            if (targetRow) {
+                const nameInput = targetRow.querySelector('.allowance-name');
+                nameInput.value = name;
+            }
+        }
+
+        function setAllowanceAmount(empType, index, amount) {
+            const containerType = empType === 'parttime' ? 'parttime' : 'fulltime';
+            const container = document.getElementById(containerType + 'AllowancesList');
+            const rows = container.querySelectorAll('.allowance-row');
+            
+            // Add rows if necessary
+            while (rows.length <= index) {
+                if (containerType === 'parttime') {
+                    addParttimeAllowance();
+                } else {
+                    addFulltimeAllowance();
+                }
+            }
+            
+            // Update the amount
+            const targetRow = container.querySelectorAll('.allowance-row')[index];
+            if (targetRow) {
+                const amountInput = targetRow.querySelector('.allowance-amount');
+                amountInput.value = amount;
+            }
+        }
+
+        function setAllowancesData(type, allowancesArray) {
+            if (!allowancesArray || !Array.isArray(allowancesArray)) return;
+            
+            const containerType = type === 'parttime' ? 'parttime' : 'fulltime';
+            const container = document.getElementById(containerType + 'AllowancesList');
+            
+            // Clear existing rows first
+            const existingRows = container.querySelectorAll('.allowance-row');
+            existingRows.forEach(row => row.remove());
+            
+            // Add allowances from the data
+            allowancesArray.forEach((allowance, index) => {
+                if (containerType === 'parttime') {
+                    addParttimeAllowance();
+                } else {
+                    addFulltimeAllowance();
+                }
+                
+                if (allowance.name) {
+                    setAllowanceName(type, index, allowance.name);
+                }
+                if (allowance.amount !== undefined) {
+                    setAllowanceAmount(type, index, allowance.amount);
+                }
+            });
+            
+            // Update delete button visibility
+            updateAllowanceDeleteButtons(containerType);
+        }
+
+        // Initialize delete button visibility on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateAllowanceDeleteButtons('fulltime');
+            updateAllowanceDeleteButtons('parttime');
+        });
+    </script>
+</body>
+</html>
