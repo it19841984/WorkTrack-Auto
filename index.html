@@ -95,6 +95,64 @@
         .editable-time-unset:hover:before {
             opacity: 0.8;
         }
+        .editable-amount {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+            position: relative;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+        .editable-amount:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+            transform: translateY(-1px);
+        }
+        .editable-amount:before {
+            content: '¥';
+            position: absolute;
+            left: 8px;
+            opacity: 0.7;
+        }
+        .editable-amount:hover:before {
+            opacity: 0.9;
+        }
+        .editable-amount-unset {
+            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+            color: #6b7280;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+        .editable-amount-unset:hover {
+            background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+            color: #374151;
+            transform: translateY(-1px);
+        }
+        .editable-amount-unset:before {
+            content: '💰';
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.5;
+            font-size: 12px;
+        }
+        .editable-amount-unset:hover:before {
+            opacity: 0.8;
+        }
         .time-input {
             border: 3px solid #1976d2;
             border-radius: 8px;
@@ -553,6 +611,50 @@
                         <i class="fas fa-edit mr-2"></i>一括変更実行
                     </button>
                 </div>
+
+                <!-- Break Time Bulk Change -->
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <h4 class="text-lg font-semibold text-amber-800 mb-2 flex items-center">
+                        <i class="fas fa-coffee mr-2"></i>休憩時間一括変更
+                    </h4>
+                    <p class="text-sm text-amber-700 mb-3">出勤している日の休憩時間を一括で変更します。</p>
+                    <div class="space-y-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-amber-700 mb-1">休憩時間を選択</label>
+                            <select id="bulkBreakTime" class="w-full px-3 py-2 border border-amber-300 rounded focus:ring-2 focus:ring-amber-500 text-sm">
+                                <option value="0">0分（休憩なし）</option>
+                                <option value="15">15分</option>
+                                <option value="30">30分</option>
+                                <option value="45">45分</option>
+                                <option value="60" selected>60分（1時間）</option>
+                                <option value="75">75分</option>
+                                <option value="90">90分（1時間半）</option>
+                                <option value="105">105分</option>
+                                <option value="120">120分（2時間）</option>
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="bg-amber-100 border border-amber-200 rounded p-2 mb-1">
+                        <p class="text-xs text-amber-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            休憩時間を選択して「変更」ボタンを押すと、全ての出勤日の休憩時間が変更されます
+                        </p>
+                    </div>
+                    <div class="text-xs text-amber-600 bg-amber-100 rounded p-2 mb-3">
+                        <i class="fas fa-calendar-check mr-1"></i>
+                        出勤している日のみが対象となります
+                    </div>
+                    
+                    <!-- 確実に表示されるボタン -->
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="applyBulkBreakTime()" style="background-color: #d97706; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);" 
+                                onmouseover="this.style.backgroundColor='#b45309'" 
+                                onmouseout="this.style.backgroundColor='#d97706'">
+                            ⚡ 休憩時間を一括変更
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -740,6 +842,7 @@
                     endTime: '',
                     breakTime: '',
                     breakDuration: '', // 個別の休憩時間
+                    specialAllowance: '', // 特別日当
                     overtime: '',
                     vacation: '',
                     isHolidayWork: false
@@ -1598,6 +1701,18 @@
                         });
                     }
                     
+                    if (summaryData.totalSpecialAllowance > 0) {
+                        // 特別日当の詳細計算式を表示
+                        let specialAllowanceDetails = [];
+                        allPeriodData.forEach(row => {
+                            if (row.specialAllowance && parseInt(row.specialAllowance) > 0) {
+                                specialAllowanceDetails.push(`${row.date}: ¥${parseInt(row.specialAllowance).toLocaleString()}`);
+                            }
+                        });
+                        const detailsText = specialAllowanceDetails.length > 0 ? ` (${specialAllowanceDetails.join(', ')})` : '';
+                        worksheetData.push(['特別日当合計', `¥${summaryData.totalSpecialAllowance.toLocaleString()}${detailsText}`]);
+                    }
+                    
                     worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
                     worksheetData.push(['']);
                     worksheetData.push(['【非課税支給額】']);
@@ -1622,6 +1737,18 @@
                         });
                     }
                     
+                    if (summaryData.totalSpecialAllowance > 0) {
+                        // 特別日当の詳細計算式を表示
+                        let specialAllowanceDetails = [];
+                        allPeriodData.forEach(row => {
+                            if (row.specialAllowance && parseInt(row.specialAllowance) > 0) {
+                                specialAllowanceDetails.push(`${row.date}: ¥${parseInt(row.specialAllowance).toLocaleString()}`);
+                            }
+                        });
+                        const detailsText = specialAllowanceDetails.length > 0 ? ` (${specialAllowanceDetails.join(', ')})` : '';
+                        worksheetData.push(['特別日当合計', `¥${summaryData.totalSpecialAllowance.toLocaleString()}${detailsText}`]);
+                    }
+                    
                     worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
                     worksheetData.push(['']);
                     worksheetData.push(['【非課税支給額】']);
@@ -1635,7 +1762,7 @@
                 );
 
                 // Add headers
-                const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '実働時間', '残業時間', '残業費用'];
+                const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '特別日当', '実働時間', '残業時間', '残業費用'];
                 if (isPartTime) {
                     headerRow.push('基本給');
                 }
@@ -1651,6 +1778,7 @@
                         row.startTime,
                         row.endTime,
                         row.breakDuration || '',
+                        row.specialAllowance || '',
                         row.actualWorkTime,
                         row.overtimeHours,
                         row.overtimeCost > 0 ? row.overtimeCost : ''
@@ -1932,6 +2060,70 @@
             }
         }
 
+        function applyBulkBreakTime() {
+            const newBreakTime = document.getElementById('bulkBreakTime').value;
+            
+            // デバッグ用ログ
+            console.log('Selected break time:', newBreakTime);
+            
+            if (!newBreakTime || newBreakTime < 0) {
+                showMessage('有効な休憩時間（分）を入力してください', 'error');
+                return;
+            }
+            
+            if (allPeriodData.length === 0) {
+                showMessage('先に対象期間を設定してください', 'error');
+                return;
+            }
+            
+            let changedCount = 0;
+            let attendanceRows = 0;
+            
+            // Apply break time change to current period data - only for attendance days
+            allPeriodData.forEach((row, index) => {
+                // Check if this is an attendance day (has startTime and endTime)
+                const hasStartTime = row.startTime && row.startTime.trim() !== '' && row.startTime !== '---';
+                const hasEndTime = row.endTime && row.endTime.trim() !== '' && row.endTime !== '---';
+                
+                if (hasStartTime && hasEndTime) {
+                    attendanceRows++;
+                    
+                    const oldBreakTime = row.breakDuration || '0';
+                    row.breakDuration = newBreakTime.toString();
+                    changedCount++;
+                    
+                    console.log(`Changed row ${index} breakDuration: ${oldBreakTime} → ${newBreakTime}`);
+                    
+                    // Also update original CSV data if it exists
+                    const originalIndex = originalCsvData.findIndex(orig => 
+                        normalizeDate(orig.date) === normalizeDate(row.date)
+                    );
+                    
+                    if (originalIndex !== -1) {
+                        originalCsvData[originalIndex].breakDuration = newBreakTime.toString();
+                    }
+                }
+            });
+            
+            console.log(`Attendance rows: ${attendanceRows}, Changed: ${changedCount}`);
+            
+            if (changedCount > 0) {
+                // Update csvData to maintain consistency
+                csvData = [...allPeriodData];
+                
+                // Trigger recalculation
+                processData();
+                
+                showMessage(`${changedCount}件の出勤日の休憩時間を${newBreakTime}分に変更しました`, 'success');
+            } else {
+                if (attendanceRows === 0) {
+                    showMessage('出勤データ（出勤時間・退勤時間が入力されている日）がありません', 'error');
+                } else {
+                    showMessage('変更対象となる出勤日がありませんでした', 'error');
+                }
+            }
+        }
+
         function handleFile(file) {
             const fileName = file.name.toLowerCase();
             
@@ -2163,7 +2355,7 @@
                 }
                 
                 if (isExportedFile) {
-                    // Format: 日付,曜日,休日出勤,出勤時間,退勤時間,休憩時間,実働時間,残業時間,残業費用[,基本給]
+                    // Format: 日付,曜日,休日出勤,出勤時間,退勤時間,休憩時間,特別日当,実働時間,残業時間,残業費用[,基本給]
                     if (cells.length >= 6) {
                         originalCsvData.push({
                             date: cells[0] || '',
@@ -2331,12 +2523,21 @@
                     startTime: displayStartTime,
                     endTime: displayEndTime,
                     breakDuration: row.breakDuration || '', // 個別休憩時間を追加
+                    specialAllowance: row.specialAllowance || '', // 特別日当を追加
                     actualWorkTime: actualWorkTime,
                     overtimeHours: overtimeHours,
                     overtimeCost: overtimeCost,
                     basicSalary: basicSalary,
                     isHolidayWork: row.isHolidayWork || false
                 });
+            });
+
+            // Calculate special allowance total
+            let totalSpecialAllowance = 0;
+            allPeriodData.forEach(row => {
+                if (row.specialAllowance) {
+                    totalSpecialAllowance += parseInt(row.specialAllowance) || 0;
+                }
             });
 
             // Calculate taxable and non-taxable amounts separately
@@ -2351,9 +2552,9 @@
             let taxableAmount; // 課税対象支給額
             
             if (isPartTime) {
-                taxableAmount = totalBasicSalary + totalOvertimeCost + adjustmentAllowancesTotal;
+                taxableAmount = totalBasicSalary + totalOvertimeCost + adjustmentAllowancesTotal + totalSpecialAllowance;
             } else {
-                taxableAmount = monthlyBaseSalary + totalOvertimeCost + adjustmentAllowancesTotal;
+                taxableAmount = monthlyBaseSalary + totalOvertimeCost + adjustmentAllowancesTotal + totalSpecialAllowance;
             }
             
             const finalTotalSalary = taxableAmount + nonTaxableAmount; // 総支給額
@@ -2367,6 +2568,7 @@
                 totalBasicSalary: isPartTime ? totalBasicSalary : monthlyBaseSalary,
                 commutingAllowance: commutingAllowance,
                 adjustmentAllowancesTotal: adjustmentAllowancesTotal,
+                totalSpecialAllowance: totalSpecialAllowance, // 特別日当合計
                 taxableAmount: taxableAmount,        // 課税対象支給額
                 nonTaxableAmount: nonTaxableAmount,  // 非課税支給額
                 totalSalary: finalTotalSalary        // 総支給額
@@ -2555,6 +2757,18 @@
                         });
                     }
                     
+                    // 特別日当の詳細表示を追加
+                    if (summaryData.totalSpecialAllowance > 0) {
+                        let specialAllowanceDetails = [];
+                        processedData.forEach(row => {
+                            if (row.specialAllowance && parseInt(row.specialAllowance) > 0) {
+                                specialAllowanceDetails.push(`${row.date}: ¥${parseInt(row.specialAllowance).toLocaleString()}`);
+                            }
+                        });
+                        const detailsText = specialAllowanceDetails.length > 0 ? ` (${specialAllowanceDetails.join(', ')})` : '';
+                        taxableDisplay += `<div>特別日当合計 = ¥${summaryData.totalSpecialAllowance.toLocaleString()}${detailsText}</div>`;
+                    }
+                    
                     let nonTaxableDisplay = '';
                     nonTaxableDisplay += `<div class="text-emerald-600 font-semibold mt-2">【非課税支給額】</div>`;
                     nonTaxableDisplay += `<div>通勤手当合計 = ¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>`;
@@ -2588,6 +2802,18 @@
                                 taxableDisplay += `<div>${displayName} = ¥${allowance.amount.toLocaleString()}</div>`;
                             }
                         });
+                    }
+                    
+                    // 特別日当の詳細表示を追加
+                    if (summaryData.totalSpecialAllowance > 0) {
+                        let specialAllowanceDetails = [];
+                        processedData.forEach(row => {
+                            if (row.specialAllowance && parseInt(row.specialAllowance) > 0) {
+                                specialAllowanceDetails.push(`${row.date}: ¥${parseInt(row.specialAllowance).toLocaleString()}`);
+                            }
+                        });
+                        const detailsText = specialAllowanceDetails.length > 0 ? ` (${specialAllowanceDetails.join(', ')})` : '';
+                        taxableDisplay += `<div>特別日当合計 = ¥${summaryData.totalSpecialAllowance.toLocaleString()}${detailsText}</div>`;
                     }
                     
                     let nonTaxableDisplay = '';
@@ -2634,6 +2860,7 @@
                         <th class="px-4 py-3 text-center">出勤時間</th>
                         <th class="px-4 py-3 text-center">退勤時間</th>
                         <th class="px-4 py-3 text-center">休憩時間</th>
+                        <th class="px-4 py-3 text-center">特別日当</th>
                         <th class="px-4 py-3 text-center">実働時間</th>
                         <th class="px-4 py-3 text-center">残業時間</th>
                         <th class="px-4 py-3 text-center">残業費用</th>
@@ -2675,6 +2902,9 @@
                         </td>
                         <td class="px-4 py-3 text-center">
                             <span class="${row.breakDuration ? 'editable-time' : 'editable-time-unset'}" data-row="${row.index}" data-field="breakDuration" onclick="editBreakDuration(this)" title="クリックして休憩時間を編集">${row.breakDuration || '未設定'}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="${row.specialAllowance ? 'editable-amount' : 'editable-amount-unset'}" data-row="${row.index}" data-field="specialAllowance" onclick="editSpecialAllowance(this)" title="クリックして特別日当を編集">${row.specialAllowance || '未設定'}</span>
                         </td>
                         <td class="px-4 py-3 text-center">${row.actualWorkTime}</td>
                         <td class="px-4 py-3 text-center">${row.overtimeHours}</td>
@@ -2986,6 +3216,19 @@
                     });
                 }
                 
+                // 特別日当の合計を追加
+                if (summaryData.totalSpecialAllowance > 0) {
+                    // 特別日当の詳細計算式を表示
+                    let specialAllowanceDetails = [];
+                    processedData.forEach(row => {
+                        if (row.specialAllowance && parseInt(row.specialAllowance) > 0) {
+                            specialAllowanceDetails.push(`${row.date}: ¥${parseInt(row.specialAllowance).toLocaleString()}`);
+                        }
+                    });
+                    const detailsText = specialAllowanceDetails.length > 0 ? ` (${specialAllowanceDetails.join(', ')})` : '';
+                    worksheetData.push(['特別日当合計', `¥${summaryData.totalSpecialAllowance.toLocaleString()}${detailsText}`]);
+                }
+                
                 worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
                 worksheetData.push(['']);
                 worksheetData.push(['【非課税支給額】']);
@@ -3010,6 +3253,19 @@
                     });
                 }
                 
+                // 特別日当の合計を追加
+                if (summaryData.totalSpecialAllowance > 0) {
+                    // 特別日当の詳細計算式を表示
+                    let specialAllowanceDetails = [];
+                    processedData.forEach(row => {
+                        if (row.specialAllowance && parseInt(row.specialAllowance) > 0) {
+                            specialAllowanceDetails.push(`${row.date}: ¥${parseInt(row.specialAllowance).toLocaleString()}`);
+                        }
+                    });
+                    const detailsText = specialAllowanceDetails.length > 0 ? ` (${specialAllowanceDetails.join(', ')})` : '';
+                    worksheetData.push(['特別日当合計', `¥${summaryData.totalSpecialAllowance.toLocaleString()}${detailsText}`]);
+                }
+                
                 worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
                 worksheetData.push(['']);
                 worksheetData.push(['【非課税支給額】']);
@@ -3023,7 +3279,7 @@
             );
 
             // Add headers
-            const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '実働時間', '残業時間', '残業費用'];
+            const headerRow = ['日付', '曜日', '休日出勤', '出勤時間', '退勤時間', '休憩時間', '特別日当', '実働時間', '残業時間', '残業費用'];
             if (isPartTime) {
                 headerRow.push('基本給');
             }
@@ -3039,6 +3295,7 @@
                     row.startTime,
                     row.endTime,
                     row.breakDuration || '',
+                    row.specialAllowance || '',
                     row.actualWorkTime,
                     row.overtimeHours,
                     row.overtimeCost > 0 ? row.overtimeCost : ''
@@ -3194,6 +3451,18 @@
                     });
                 }
                 
+                // 特別日当の詳細を追加
+                if (summaryData.totalSpecialAllowance > 0) {
+                    let specialAllowanceDetails = [];
+                    processedData.forEach(row => {
+                        if (row.specialAllowance && parseInt(row.specialAllowance) > 0) {
+                            specialAllowanceDetails.push(`${row.date}: ¥${parseInt(row.specialAllowance).toLocaleString()}`);
+                        }
+                    });
+                    const detailsText = specialAllowanceDetails.length > 0 ? ` (${specialAllowanceDetails.join(', ')})` : '';
+                    csvContent += `特別日当合計,¥${summaryData.totalSpecialAllowance.toLocaleString()}${detailsText}\n`;
+                }
+                
                 csvContent += `課税対象支給額計,¥${summaryData.taxableAmount.toLocaleString()}\n`;
                 csvContent += '\n';
                 csvContent += '【非課税支給額】\n';
@@ -3218,6 +3487,18 @@
                     });
                 }
                 
+                // 特別日当の詳細を追加
+                if (summaryData.totalSpecialAllowance > 0) {
+                    let specialAllowanceDetails = [];
+                    processedData.forEach(row => {
+                        if (row.specialAllowance && parseInt(row.specialAllowance) > 0) {
+                            specialAllowanceDetails.push(`${row.date}: ¥${parseInt(row.specialAllowance).toLocaleString()}`);
+                        }
+                    });
+                    const detailsText = specialAllowanceDetails.length > 0 ? ` (${specialAllowanceDetails.join(', ')})` : '';
+                    csvContent += `特別日当合計,¥${summaryData.totalSpecialAllowance.toLocaleString()}${detailsText}\n`;
+                }
+                
                 csvContent += `課税対象支給額計,¥${summaryData.taxableAmount.toLocaleString()}\n`;
                 csvContent += '\n';
                 csvContent += '【非課税支給額】\n';
@@ -3232,7 +3513,7 @@
             csvContent += '詳細\n';
             
             // Add headers
-            let headerLine = '日付,曜日,休日出勤,出勤時間,退勤時間,休憩時間,実働時間,残業時間,残業費用';
+            let headerLine = '日付,曜日,休日出勤,出勤時間,退勤時間,休憩時間,特別日当,実働時間,残業時間,残業費用';
             if (isPartTime) {
                 headerLine += ',基本給';
             }
@@ -3247,6 +3528,7 @@
                     row.startTime,
                     row.endTime,
                     row.breakDuration || '',
+                    row.specialAllowance || '',
                     row.actualWorkTime,
                     row.overtimeHours,
                     row.overtimeCost > 0 ? row.overtimeCost : ''
@@ -3369,6 +3651,99 @@
         }
 
         function cancelBreakDurationEdit(element, originalValue) {
+            element.innerHTML = originalValue;
+        }
+
+        function editSpecialAllowance(element) {
+            const currentValue = element.textContent.trim();
+            const displayValue = currentValue === '未設定' ? '' : currentValue;
+            
+            // Create input for special allowance
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.value = displayValue;
+            input.className = 'time-input';
+            input.placeholder = '例: 1000';
+            input.min = '0';
+            input.step = '100';
+            
+            // Add event listeners
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveSpecialAllowanceEdit(element, this.value);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelSpecialAllowanceEdit(element, currentValue);
+                }
+            });
+            
+            input.addEventListener('blur', function(e) {
+                setTimeout(() => {
+                    if (document.contains(this)) {
+                        saveSpecialAllowanceEdit(element, this.value);
+                    }
+                }, 100);
+            });
+            
+            // Replace element content with input
+            element.innerHTML = '';
+            element.appendChild(input);
+            
+            // Focus and select
+            input.focus();
+            input.select();
+        }
+
+        function saveSpecialAllowanceEdit(element, newValue) {
+            const rowIndex = parseInt(element.dataset.row);
+            const field = element.dataset.field;
+            
+            // Validate row index
+            if (rowIndex < 0 || rowIndex >= allPeriodData.length) {
+                showMessage('データの更新に失敗しました: 無効な行インデックス', 'error');
+                cancelSpecialAllowanceEdit(element, element.textContent || '未設定');
+                return;
+            }
+            
+            // Validate amount
+            const amount = parseInt(newValue) || 0;
+            const displayValue = amount > 0 ? amount.toString() : '';
+            
+            // Update data
+            if (allPeriodData[rowIndex] !== undefined) {
+                const oldValue = allPeriodData[rowIndex][field];
+                allPeriodData[rowIndex][field] = displayValue;
+                
+                try {
+                    // Update display
+                    element.innerHTML = displayValue || '未設定';
+                    element.className = displayValue ? 'editable-amount' : 'editable-amount-unset';
+                    
+                    // Recalculate data
+                    csvData = [...allPeriodData];
+                    processData();
+                    
+                    // Show confirmation message
+                    const amountDisplay = displayValue ? `¥${parseInt(displayValue).toLocaleString()}` : '未設定';
+                    showMessage(`✅ ${allPeriodData[rowIndex].date} の特別日当を「${amountDisplay}」に更新しました`, 'success');
+                    
+                } catch (error) {
+                    // Rollback on error
+                    allPeriodData[rowIndex][field] = oldValue;
+                    csvData = [...allPeriodData];
+                    processData();
+                    
+                    showMessage('計算中にエラーが発生しました: ' + error.message, 'error');
+                }
+                
+            } else {
+                showMessage('データの更新に失敗しました: データが見つかりません', 'error');
+                cancelSpecialAllowanceEdit(element, element.textContent || '未設定');
+            }
+        }
+
+        function cancelSpecialAllowanceEdit(element, originalValue) {
             element.innerHTML = originalValue;
         }
 
