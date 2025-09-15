@@ -621,7 +621,7 @@
                     <div class="space-y-3 mb-3">
                         <div>
                             <label class="block text-xs font-medium text-amber-700 mb-1">休憩時間を選択</label>
-                            <select id="bulkBreakTime" class="w-full px-3 py-2 border border-amber-300 rounded focus:ring-2 focus:ring-amber-500 text-sm">
+                            <select id="bulkBreakTimeSelect" class="w-full px-3 py-2 border border-amber-300 rounded focus:ring-2 focus:ring-amber-500 text-sm">
                                 <option value="0">0分（休憩なし）</option>
                                 <option value="15">15分</option>
                                 <option value="30">30分</option>
@@ -2061,10 +2061,10 @@
         }
 
         function applyBulkBreakTime() {
-            const newBreakTime = document.getElementById('bulkBreakTime').value;
+            const newBreakTime = document.getElementById('bulkBreakTimeSelect').value;
             
             // デバッグ用ログ
-            console.log('Selected break time:', newBreakTime);
+            console.log('Selected break time:', newBreakTime, 'type:', typeof newBreakTime);
             
             if (!newBreakTime || newBreakTime < 0) {
                 showMessage('有効な休憩時間（分）を入力してください', 'error');
@@ -2079,6 +2079,23 @@
             let changedCount = 0;
             let attendanceRows = 0;
             
+            // Date normalization function
+            const normalizeDate = (dateStr) => {
+                if (!dateStr) return '';
+                
+                if (dateStr.match(/^\d{4}\/\d{1,2}\/\d{1,2}$/)) {
+                    const parts = dateStr.split('/');
+                    return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                } else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+                    const parts = dateStr.split('/');
+                    return parts[2] + '-' + parts[0].padStart(2, '0') + '-' + parts[1].padStart(2, '0');
+                } else if (dateStr.match(/^\d{4}-\d{1,2}-\d{1,2}$/)) {
+                    const parts = dateStr.split('-');
+                    return parts[0] + '-' + parts[1].padStart(2, '0') + '-' + parts[2].padStart(2, '0');
+                }
+                return dateStr;
+            };
+            
             // Apply break time change to current period data - only for attendance days
             allPeriodData.forEach((row, index) => {
                 // Check if this is an attendance day (has startTime and endTime)
@@ -2092,15 +2109,17 @@
                     row.breakDuration = newBreakTime.toString();
                     changedCount++;
                     
-                    console.log(`Changed row ${index} breakDuration: ${oldBreakTime} → ${newBreakTime}`);
+                    console.log(`Changed row ${index} breakDuration: ${oldBreakTime} → "${row.breakDuration}" (type: ${typeof row.breakDuration}, newBreakTime type: ${typeof newBreakTime})`);
                     
                     // Also update original CSV data if it exists
-                    const originalIndex = originalCsvData.findIndex(orig => 
-                        normalizeDate(orig.date) === normalizeDate(row.date)
-                    );
-                    
-                    if (originalIndex !== -1) {
-                        originalCsvData[originalIndex].breakDuration = newBreakTime.toString();
+                    if (originalCsvData && originalCsvData.length > 0) {
+                        const originalIndex = originalCsvData.findIndex(orig => 
+                            normalizeDate(orig.date) === normalizeDate(row.date)
+                        );
+                        
+                        if (originalIndex !== -1) {
+                            originalCsvData[originalIndex].breakDuration = newBreakTime.toString();
+                        }
                     }
                 }
             });
@@ -2111,10 +2130,24 @@
                 // Update csvData to maintain consistency
                 csvData = [...allPeriodData];
                 
-                // Trigger recalculation
-                processData();
+                // Force recalculation by clearing processedData first
+                processedData = [];
                 
-                showMessage(`${changedCount}件の出勤日の休憩時間を${newBreakTime}分に変更しました`, 'success');
+                // Trigger recalculation
+                try {
+                    console.log('=== AFTER BULK CHANGE - Checking breakDuration values ===');
+                    allPeriodData.forEach((row, i) => {
+                        if (row.startTime && row.endTime) {
+                            console.log(`Row ${i}: date=${row.date}, breakDuration="${row.breakDuration}"`);
+                        }
+                    });
+                    
+                    processData();
+                    showMessage(`${changedCount}件の出勤日の休憩時間を${newBreakTime}分に変更しました`, 'success');
+                } catch (error) {
+                    console.error('Error during recalculation:', error);
+                    showMessage('計算中にエラーが発生しました: ' + error.message, 'error');
+                }
             } else {
                 if (attendanceRows === 0) {
                     showMessage('出勤データ（出勤時間・退勤時間が入力されている日）がありません', 'error');
@@ -2415,9 +2448,18 @@
         }
 
         function processData() {
+            console.log('=== processData() CALLED ===');
             if (!allPeriodData || allPeriodData.length === 0) {
                 return;
             }
+
+            // Debug: Log current breakDuration values
+            console.log('Current allPeriodData breakDuration values:');
+            allPeriodData.forEach((row, i) => {
+                if (row.startTime && row.endTime) {
+                    console.log(`  Row ${i}: date=${row.date}, breakDuration="${row.breakDuration}"`);
+                }
+            });
 
             // Update csvData from allPeriodData to ensure consistency
             csvData = [...allPeriodData];
@@ -2477,17 +2519,21 @@
                     if (startMinutes !== null && endMinutes !== null && endMinutes > startMinutes) {
                         // Get break time - prioritize individual row's breakDuration, fallback to day setting
                         let breakMinutes = 0;
+                        console.log(`Row ${index} - Checking breakDuration: value="${row.breakDuration}", exists=${!!row.breakDuration}, notEmpty=${row.breakDuration !== ''}, notDashes=${row.breakDuration !== '---'}`);
                         if (row.breakDuration && row.breakDuration !== '' && row.breakDuration !== '---') {
                             // Convert break duration from various formats to minutes
                             breakMinutes = parseBreakDuration(row.breakDuration);
+                            console.log(`Row ${index} - Using breakDuration: "${row.breakDuration}" → ${breakMinutes} minutes`);
                         } else {
                             // Fallback to day setting
                             breakMinutes = parseInt(daySettings[dayOfWeek]?.breakTime) || 60;
+                            console.log(`Row ${index} - Using day setting: ${breakMinutes} minutes (dayOfWeek: ${dayOfWeek}, row.breakDuration: "${row.breakDuration}")`);
                         }
                         
                         // Calculate actual work time (total time - break time)
                         const totalMinutes = endMinutes - startMinutes;
                         const actualWorkMinutes = Math.max(0, totalMinutes - breakMinutes);
+                        console.log(`Row ${index} - Total: ${totalMinutes}min, Break: ${breakMinutes}min, Actual work: ${actualWorkMinutes}min`);
                         
                         if (actualWorkMinutes > 0) {
                             actualWorkTime = minutesToTime(actualWorkMinutes);
@@ -3766,6 +3812,7 @@
 
         // 休憩時間を分に変換する関数
         function parseBreakDuration(breakStr) {
+            console.log(`parseBreakDuration called with: "${breakStr}" (type: ${typeof breakStr})`);
             if (!breakStr || breakStr === '' || breakStr === '---') return 0;
             
             breakStr = breakStr.toString().toLowerCase();
@@ -3779,28 +3826,37 @@
             if (hoursAndMinutesMatch) {
                 const hours = parseFloat(hoursAndMinutesMatch[1]);
                 const minutes = parseInt(hoursAndMinutesMatch[2]);
-                return Math.round(hours * 60 + minutes);
+                const result = Math.round(hours * 60 + minutes);
+                console.log(`parseBreakDuration result (hours+minutes): ${result}`);
+                return result;
             }
             
             // 時間のみ (例: "1時間", "1.5時間")
             const hoursOnlyMatch = breakStr.match(/(\d+(?:\.\d+)?)\s*時間/);
             if (hoursOnlyMatch) {
                 const hours = parseFloat(hoursOnlyMatch[1]);
-                return Math.round(hours * 60);
+                const result = Math.round(hours * 60);
+                console.log(`parseBreakDuration result (hours only): ${result}`);
+                return result;
             }
             
             // 分のみ (例: "60分")
             const minutesOnlyMatch = breakStr.match(/(\d+)\s*分/);
             if (minutesOnlyMatch) {
-                return parseInt(minutesOnlyMatch[1]);
+                const result = parseInt(minutesOnlyMatch[1]);
+                console.log(`parseBreakDuration result (minutes only): ${result}`);
+                return result;
             }
             
             // 数字のみ（分として扱う）
             const numberMatch = breakStr.match(/^(\d+(?:\.\d+)?)$/);
             if (numberMatch) {
-                return Math.round(parseFloat(numberMatch[1]));
+                const result = Math.round(parseFloat(numberMatch[1]));
+                console.log(`parseBreakDuration result (number): ${result}`);
+                return result;
             }
             
+            console.log('parseBreakDuration result: 0 (fallback)');
             return 0;
         }
 
