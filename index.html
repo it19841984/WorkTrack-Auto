@@ -412,9 +412,20 @@
                             </div>
                             
                             <!-- Commuting Allowance -->
-                            <div>
-                                <label class="block text-sm font-medium text-blue-800 mb-2">通勤手当 (円)</label>
-                                <input type="number" id="fulltimeCommutingAllowance" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <div class="grid grid-cols-1 gap-3">
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                                    <p class="text-xs text-blue-700 mb-1"><i class="fas fa-info-circle mr-1"></i><strong>通勤手当の計算方法</strong></p>
+                                    <p class="text-xs text-blue-600">• 1日あたりの金額が入力されている場合：1日あたり × 勤務日数で計算</p>
+                                    <p class="text-xs text-blue-600">• 1日あたりが0または未入力の場合：月額をそのまま適用</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-blue-800 mb-2">通勤手当（月額） (円)</label>
+                                    <input type="number" id="fulltimeCommutingAllowance" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-blue-800 mb-2">通勤手当（1日あたり） (円)</label>
+                                    <input type="number" id="fulltimeCommutingAllowanceDaily" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                </div>
                             </div>
                             
                             <!-- Multiple Adjustment Allowances Section -->
@@ -468,9 +479,20 @@
                             </div>
                             
                             <!-- Commuting Allowance -->
-                            <div>
-                                <label class="block text-sm font-medium text-yellow-800 mb-2">通勤手当（1日あたり） (円)</label>
-                                <input type="number" id="parttimeCommutingAllowance" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                            <div class="grid grid-cols-1 gap-3">
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                                    <p class="text-xs text-yellow-700 mb-1"><i class="fas fa-info-circle mr-1"></i><strong>通勤手当の計算方法</strong></p>
+                                    <p class="text-xs text-yellow-600">• 1日あたりの金額が入力されている場合：1日あたり × 勤務日数で計算</p>
+                                    <p class="text-xs text-yellow-600">• 1日あたりが0または未入力の場合：月額をそのまま適用</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-yellow-800 mb-2">通勤手当（月額） (円)</label>
+                                    <input type="number" id="parttimeCommutingAllowanceMonthly" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-yellow-800 mb-2">通勤手当（1日あたり） (円)</label>
+                                    <input type="number" id="parttimeCommutingAllowance" value="0" min="0" placeholder="0" onchange="recalculateIfNeeded()" class="w-full px-4 py-2 border border-yellow-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                                </div>
                             </div>
                             
                             <!-- Multiple Adjustment Allowances Section -->
@@ -1409,13 +1431,26 @@
                                     }
                                     break;
                                 case '通勤手当':
-                                    const commutingAllowance = value.replace(/円/g, '').trim();
-                                    const empTypeForCommuting = document.getElementById('employmentType').value;
-                                    if (commutingAllowance) {
-                                        if (empTypeForCommuting === 'parttime') {
-                                            document.getElementById('parttimeCommutingAllowance').value = commutingAllowance;
+                                case '通勤手当（月額）':
+                                    const commutingAllowanceMonthly = value.replace(/円/g, '').trim();
+                                    const empTypeForCommutingMonthly = document.getElementById('employmentType').value;
+                                    if (commutingAllowanceMonthly) {
+                                        if (empTypeForCommutingMonthly === 'parttime') {
+                                            document.getElementById('parttimeCommutingAllowanceMonthly').value = commutingAllowanceMonthly;
                                         } else {
-                                            document.getElementById('fulltimeCommutingAllowance').value = commutingAllowance;
+                                            document.getElementById('fulltimeCommutingAllowance').value = commutingAllowanceMonthly;
+                                        }
+                                    }
+                                    break;
+                                case '通勤手当（日額）':
+                                case '通勤手当（1日あたり）':
+                                    const commutingAllowanceDaily = value.replace(/円/g, '').trim();
+                                    const empTypeForCommutingDaily = document.getElementById('employmentType').value;
+                                    if (commutingAllowanceDaily) {
+                                        if (empTypeForCommutingDaily === 'parttime') {
+                                            document.getElementById('parttimeCommutingAllowance').value = commutingAllowanceDaily;
+                                        } else {
+                                            document.getElementById('fulltimeCommutingAllowanceDaily').value = commutingAllowanceDaily;
                                         }
                                     }
                                     break;
@@ -1570,14 +1605,16 @@
                         wageSettings = {
                             regularWage: regularWage,
                             overtimeWage: overtimeWage,
-                            commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                            commutingAllowanceMonthly: document.getElementById('parttimeCommutingAllowanceMonthly').value,
+                            commutingAllowanceDaily: document.getElementById('parttimeCommutingAllowance').value,
                             adjustmentAllowances: getAllowancesData('parttime') || []
                         };
                     } else {
                         wageSettings = {
                             baseSalary: regularWage,
                             overtimeWage: overtimeWage,
-                            commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                            commutingAllowanceMonthly: document.getElementById('fulltimeCommutingAllowance').value,
+                            commutingAllowanceDaily: document.getElementById('fulltimeCommutingAllowanceDaily').value,
                             adjustmentAllowances: getAllowancesData('fulltime') || []
                         };
                     }
@@ -1602,7 +1639,8 @@
                     worksheetData.push(
                         ['時給', wageSettings.regularWage + '円/時'],
                         ['残業時給', wageSettings.overtimeWage + '円/時'],
-                        ['通勤手当', wageSettings.commutingAllowance + '円']
+                        ['通勤手当（月額）', wageSettings.commutingAllowanceMonthly + '円'],
+                        ['通勤手当（日額）', wageSettings.commutingAllowanceDaily + '円']
                     );
                     // Add multiple adjustment allowances
                     wageSettings.adjustmentAllowances.forEach((allowance, index) => {
@@ -1617,7 +1655,8 @@
                     worksheetData.push(
                         ['基本給', wageSettings.baseSalary + '円/月'],
                         ['残業時給', wageSettings.overtimeWage + '円/時'],
-                        ['通勤手当', wageSettings.commutingAllowance + '円']
+                        ['通勤手当（月額）', wageSettings.commutingAllowanceMonthly + '円'],
+                        ['通勤手当（日額）', wageSettings.commutingAllowanceDaily + '円']
                     );
                     // Add multiple adjustment allowances
                     wageSettings.adjustmentAllowances.forEach((allowance, index) => {
@@ -1716,7 +1755,12 @@
                     worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
                     worksheetData.push(['']);
                     worksheetData.push(['【非課税支給額】']);
-                    worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    // 通勤手当の表示：日額か月額かを判定して表示
+                    if (summaryData.commutingAllowanceDaily > 0) {
+                        worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowanceDaily.toLocaleString()}/日 × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    } else {
+                        worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    }
                     worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
                 } else {
                     const monthlyBaseSalary = parseInt(wageSettings.baseSalary) || 200000;
@@ -1752,7 +1796,12 @@
                     worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
                     worksheetData.push(['']);
                     worksheetData.push(['【非課税支給額】']);
-                    worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    // 通勤手当の表示：日額か月額かを判定して表示
+                    if (summaryData.commutingAllowanceDaily > 0) {
+                        worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowanceDaily.toLocaleString()}/日 × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    } else {
+                        worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                    }
                     worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
                 }
                 
@@ -2063,9 +2112,6 @@
         function applyBulkBreakTime() {
             const newBreakTime = document.getElementById('bulkBreakTimeSelect').value;
             
-            // デバッグ用ログ
-            console.log('Selected break time:', newBreakTime, 'type:', typeof newBreakTime);
-            
             if (!newBreakTime || newBreakTime < 0) {
                 showMessage('有効な休憩時間（分）を入力してください', 'error');
                 return;
@@ -2109,7 +2155,7 @@
                     row.breakDuration = newBreakTime.toString();
                     changedCount++;
                     
-                    console.log(`Changed row ${index} breakDuration: ${oldBreakTime} → "${row.breakDuration}" (type: ${typeof row.breakDuration}, newBreakTime type: ${typeof newBreakTime})`);
+                    console.log(`Changed row ${index} breakDuration: ${oldBreakTime} → "${row.breakDuration}"`);
                     
                     // Also update original CSV data if it exists
                     if (originalCsvData && originalCsvData.length > 0) {
@@ -2135,13 +2181,6 @@
                 
                 // Trigger recalculation
                 try {
-                    console.log('=== AFTER BULK CHANGE - Checking breakDuration values ===');
-                    allPeriodData.forEach((row, i) => {
-                        if (row.startTime && row.endTime) {
-                            console.log(`Row ${i}: date=${row.date}, breakDuration="${row.breakDuration}"`);
-                        }
-                    });
-                    
                     processData();
                     showMessage(`${changedCount}件の出勤日の休憩時間を${newBreakTime}分に変更しました`, 'success');
                 } catch (error) {
@@ -2448,18 +2487,9 @@
         }
 
         function processData() {
-            console.log('=== processData() CALLED ===');
             if (!allPeriodData || allPeriodData.length === 0) {
                 return;
             }
-
-            // Debug: Log current breakDuration values
-            console.log('Current allPeriodData breakDuration values:');
-            allPeriodData.forEach((row, i) => {
-                if (row.startTime && row.endTime) {
-                    console.log(`  Row ${i}: date=${row.date}, breakDuration="${row.breakDuration}"`);
-                }
-            });
 
             // Update csvData from allPeriodData to ensure consistency
             csvData = [...allPeriodData];
@@ -2475,16 +2505,18 @@
             const isPartTime = document.getElementById('employmentType').value === 'parttime';
             
             // Get wage settings based on employment type
-            let regularHourlyWage, overtimeHourlyWage, monthlyBaseSalary, commutingAllowance, adjustmentAllowancesTotal;
+            let regularHourlyWage, overtimeHourlyWage, monthlyBaseSalary, commutingAllowanceMonthly, commutingAllowanceDaily, adjustmentAllowancesTotal;
             if (isPartTime) {
                 regularHourlyWage = parseInt(document.getElementById('regularHourlyWage').value) || 1000;
                 overtimeHourlyWage = parseInt(document.getElementById('overtimeHourlyWage').value) || 1250;
-                commutingAllowance = parseInt(document.getElementById('parttimeCommutingAllowance').value) || 0;
+                commutingAllowanceMonthly = parseInt(document.getElementById('parttimeCommutingAllowanceMonthly').value) || 0;
+                commutingAllowanceDaily = parseInt(document.getElementById('parttimeCommutingAllowance').value) || 0;
                 adjustmentAllowancesTotal = getAllowancesTotal('parttime');
             } else {
                 monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
                 overtimeHourlyWage = parseInt(document.getElementById('fulltimeOvertimeHourlyWage').value) || 1500;
-                commutingAllowance = parseInt(document.getElementById('fulltimeCommutingAllowance').value) || 0;
+                commutingAllowanceMonthly = parseInt(document.getElementById('fulltimeCommutingAllowance').value) || 0;
+                commutingAllowanceDaily = parseInt(document.getElementById('fulltimeCommutingAllowanceDaily').value) || 0;
                 adjustmentAllowancesTotal = getAllowancesTotal('fulltime');
             }
 
@@ -2519,21 +2551,17 @@
                     if (startMinutes !== null && endMinutes !== null && endMinutes > startMinutes) {
                         // Get break time - prioritize individual row's breakDuration, fallback to day setting
                         let breakMinutes = 0;
-                        console.log(`Row ${index} - Checking breakDuration: value="${row.breakDuration}", exists=${!!row.breakDuration}, notEmpty=${row.breakDuration !== ''}, notDashes=${row.breakDuration !== '---'}`);
                         if (row.breakDuration && row.breakDuration !== '' && row.breakDuration !== '---') {
                             // Convert break duration from various formats to minutes
                             breakMinutes = parseBreakDuration(row.breakDuration);
-                            console.log(`Row ${index} - Using breakDuration: "${row.breakDuration}" → ${breakMinutes} minutes`);
                         } else {
                             // Fallback to day setting
                             breakMinutes = parseInt(daySettings[dayOfWeek]?.breakTime) || 60;
-                            console.log(`Row ${index} - Using day setting: ${breakMinutes} minutes (dayOfWeek: ${dayOfWeek}, row.breakDuration: "${row.breakDuration}")`);
                         }
                         
                         // Calculate actual work time (total time - break time)
                         const totalMinutes = endMinutes - startMinutes;
                         const actualWorkMinutes = Math.max(0, totalMinutes - breakMinutes);
-                        console.log(`Row ${index} - Total: ${totalMinutes}min, Break: ${breakMinutes}min, Actual work: ${actualWorkMinutes}min`);
                         
                         if (actualWorkMinutes > 0) {
                             actualWorkTime = minutesToTime(actualWorkMinutes);
@@ -2588,12 +2616,11 @@
 
             // Calculate taxable and non-taxable amounts separately
             let nonTaxableAmount; // 非課税支給額（通勤手当のみ）
-            if (isPartTime) {
-                // パートの場合：通勤手当（1日あたり）× 出勤日数
-                nonTaxableAmount = commutingAllowance * workDays;
+            // 通勤手当の計算：日額が設定されている場合は日額×勤務日数、そうでなければ月額
+            if (commutingAllowanceDaily > 0) {
+                nonTaxableAmount = commutingAllowanceDaily * workDays;
             } else {
-                // 常勤の場合：通勤手当（月額）
-                nonTaxableAmount = commutingAllowance;
+                nonTaxableAmount = commutingAllowanceMonthly;
             }
             let taxableAmount; // 課税対象支給額
             
@@ -2612,7 +2639,8 @@
                 totalOvertimeCost: totalOvertimeCost,
                 totalWorkMinutes: totalWorkMinutes,
                 totalBasicSalary: isPartTime ? totalBasicSalary : monthlyBaseSalary,
-                commutingAllowance: commutingAllowance,
+                commutingAllowanceMonthly: commutingAllowanceMonthly,
+                commutingAllowanceDaily: commutingAllowanceDaily,
                 adjustmentAllowancesTotal: adjustmentAllowancesTotal,
                 totalSpecialAllowance: totalSpecialAllowance, // 特別日当合計
                 taxableAmount: taxableAmount,        // 課税対象支給額
@@ -2817,7 +2845,12 @@
                     
                     let nonTaxableDisplay = '';
                     nonTaxableDisplay += `<div class="text-emerald-600 font-semibold mt-2">【非課税支給額】</div>`;
-                    nonTaxableDisplay += `<div>通勤手当合計 = ¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>`;
+                    // 通勤手当の表示：日額か月額かを判定
+                    if (summaryData.commutingAllowanceDaily > 0) {
+                        nonTaxableDisplay += `<div>通勤手当合計 = ¥${summaryData.commutingAllowanceDaily.toLocaleString()}/日 × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>`;
+                    } else {
+                        nonTaxableDisplay += `<div>通勤手当合計 = ¥${summaryData.nonTaxableAmount.toLocaleString()}</div>`;
+                    }
                     
                     formulaContent = `
                         <div class="space-y-2 font-mono text-sm">
@@ -3120,14 +3153,16 @@
                     wageSettings = {
                         regularWage: document.getElementById('regularHourlyWage').value,
                         overtimeWage: document.getElementById('overtimeHourlyWage').value,
-                        commutingAllowance: document.getElementById('parttimeCommutingAllowance').value,
+                        commutingAllowanceMonthly: document.getElementById('parttimeCommutingAllowanceMonthly').value,
+                        commutingAllowanceDaily: document.getElementById('parttimeCommutingAllowance').value,
                         adjustmentAllowances: getAllowancesData('parttime') || []
                     };
                 } else {
                     wageSettings = {
                         baseSalary: document.getElementById('baseSalary').value,
                         overtimeWage: document.getElementById('fulltimeOvertimeHourlyWage').value,
-                        commutingAllowance: document.getElementById('fulltimeCommutingAllowance').value,
+                        commutingAllowanceMonthly: document.getElementById('fulltimeCommutingAllowance').value,
+                        commutingAllowanceDaily: document.getElementById('fulltimeCommutingAllowanceDaily').value,
                         adjustmentAllowances: getAllowancesData('fulltime') || []
                     };
                 }
@@ -3163,7 +3198,8 @@
                 worksheetData.push(
                     ['時給', wageSettings.regularWage + '円/時'],
                     ['残業時給', wageSettings.overtimeWage + '円/時'],
-                    ['通勤手当', wageSettings.commutingAllowance + '円']
+                    ['通勤手当（月額）', wageSettings.commutingAllowanceMonthly + '円'],
+                    ['通勤手当（日額）', wageSettings.commutingAllowanceDaily + '円']
                 );
                 // Add multiple adjustment allowances
                 wageSettings.adjustmentAllowances.forEach((allowance, index) => {
@@ -3178,7 +3214,8 @@
                 worksheetData.push(
                     ['基本給', wageSettings.baseSalary + '円/月'],
                     ['残業時給', wageSettings.overtimeWage + '円/時'],
-                    ['通勤手当', wageSettings.commutingAllowance + '円']
+                    ['通勤手当（月額）', wageSettings.commutingAllowanceMonthly + '円'],
+                    ['通勤手当（日額）', wageSettings.commutingAllowanceDaily + '円']
                 );
                 // Add multiple adjustment allowances
                 wageSettings.adjustmentAllowances.forEach((allowance, index) => {
@@ -3278,7 +3315,12 @@
                 worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
                 worksheetData.push(['']);
                 worksheetData.push(['【非課税支給額】']);
-                worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                // 通勤手当の表示：日額か月額かを判定して表示
+                if (summaryData.commutingAllowanceDaily > 0) {
+                    worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowanceDaily.toLocaleString()}/日 × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                } else {
+                    worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                }
                 worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
             } else {
                 const monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
@@ -3315,7 +3357,12 @@
                 worksheetData.push(['課税対象支給額計', `¥${summaryData.taxableAmount.toLocaleString()}`]);
                 worksheetData.push(['']);
                 worksheetData.push(['【非課税支給額】']);
-                worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                // 通勤手当の表示：日額か月額かを判定して表示
+                if (summaryData.commutingAllowanceDaily > 0) {
+                    worksheetData.push(['通勤手当合計', `¥${summaryData.commutingAllowanceDaily.toLocaleString()}/日 × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                } else {
+                    worksheetData.push(['通勤手当合計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
+                }
                 worksheetData.push(['非課税支給額計', `¥${summaryData.nonTaxableAmount.toLocaleString()}`]);
             }
             
@@ -3420,7 +3467,8 @@
             if (isPartTime) {
                 csvContent += `時給,${wageSettings.regularWage}円/時\n`;
                 csvContent += `残業時給,${wageSettings.overtimeWage}円/時\n`;
-                csvContent += `通勤手当,${wageSettings.commutingAllowance}円\n`;
+                csvContent += `通勤手当（月額）,${wageSettings.commutingAllowanceMonthly}円\n`;
+                csvContent += `通勤手当（日額）,${wageSettings.commutingAllowanceDaily}円\n`;
                 // Add multiple adjustment allowances
                 wageSettings.adjustmentAllowances.forEach((allowance, index) => {
                     if (allowance.name || allowance.amount > 0) {
@@ -3431,7 +3479,8 @@
             } else {
                 csvContent += `基本給,${wageSettings.baseSalary}円/月\n`;
                 csvContent += `残業時給,${wageSettings.overtimeWage}円/時\n`;
-                csvContent += `通勤手当,${wageSettings.commutingAllowance}円\n`;
+                csvContent += `通勤手当（月額）,${wageSettings.commutingAllowanceMonthly}円\n`;
+                csvContent += `通勤手当（日額）,${wageSettings.commutingAllowanceDaily}円\n`;
                 // Add multiple adjustment allowances
                 wageSettings.adjustmentAllowances.forEach((allowance, index) => {
                     if (allowance.name || allowance.amount > 0) {
@@ -3512,7 +3561,12 @@
                 csvContent += `課税対象支給額計,¥${summaryData.taxableAmount.toLocaleString()}\n`;
                 csvContent += '\n';
                 csvContent += '【非課税支給額】\n';
-                csvContent += `通勤手当合計,¥${summaryData.commutingAllowance.toLocaleString()} × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                // 通勤手当の表示：日額か月額かを判定して表示
+                if (summaryData.commutingAllowanceDaily > 0) {
+                    csvContent += `通勤手当合計,¥${summaryData.commutingAllowanceDaily.toLocaleString()}/日 × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                } else {
+                    csvContent += `通勤手当合計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                }
                 csvContent += `非課税支給額計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
             } else {
                 const monthlyBaseSalary = parseInt(document.getElementById('baseSalary').value) || 200000;
@@ -3548,7 +3602,12 @@
                 csvContent += `課税対象支給額計,¥${summaryData.taxableAmount.toLocaleString()}\n`;
                 csvContent += '\n';
                 csvContent += '【非課税支給額】\n';
-                csvContent += `通勤手当合計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                // 通勤手当の表示：日額か月額かを判定して表示
+                if (summaryData.commutingAllowanceDaily > 0) {
+                    csvContent += `通勤手当合計,¥${summaryData.commutingAllowanceDaily.toLocaleString()}/日 × ${summaryData.workDays}日 = ¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                } else {
+                    csvContent += `通勤手当合計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
+                }
                 csvContent += `非課税支給額計,¥${summaryData.nonTaxableAmount.toLocaleString()}\n`;
             }
             
@@ -3812,7 +3871,6 @@
 
         // 休憩時間を分に変換する関数
         function parseBreakDuration(breakStr) {
-            console.log(`parseBreakDuration called with: "${breakStr}" (type: ${typeof breakStr})`);
             if (!breakStr || breakStr === '' || breakStr === '---') return 0;
             
             breakStr = breakStr.toString().toLowerCase();
@@ -3826,37 +3884,28 @@
             if (hoursAndMinutesMatch) {
                 const hours = parseFloat(hoursAndMinutesMatch[1]);
                 const minutes = parseInt(hoursAndMinutesMatch[2]);
-                const result = Math.round(hours * 60 + minutes);
-                console.log(`parseBreakDuration result (hours+minutes): ${result}`);
-                return result;
+                return Math.round(hours * 60 + minutes);
             }
             
             // 時間のみ (例: "1時間", "1.5時間")
             const hoursOnlyMatch = breakStr.match(/(\d+(?:\.\d+)?)\s*時間/);
             if (hoursOnlyMatch) {
                 const hours = parseFloat(hoursOnlyMatch[1]);
-                const result = Math.round(hours * 60);
-                console.log(`parseBreakDuration result (hours only): ${result}`);
-                return result;
+                return Math.round(hours * 60);
             }
             
             // 分のみ (例: "60分")
             const minutesOnlyMatch = breakStr.match(/(\d+)\s*分/);
             if (minutesOnlyMatch) {
-                const result = parseInt(minutesOnlyMatch[1]);
-                console.log(`parseBreakDuration result (minutes only): ${result}`);
-                return result;
+                return parseInt(minutesOnlyMatch[1]);
             }
             
             // 数字のみ（分として扱う）
             const numberMatch = breakStr.match(/^(\d+(?:\.\d+)?)$/);
             if (numberMatch) {
-                const result = Math.round(parseFloat(numberMatch[1]));
-                console.log(`parseBreakDuration result (number): ${result}`);
-                return result;
+                return Math.round(parseFloat(numberMatch[1]));
             }
             
-            console.log('parseBreakDuration result: 0 (fallback)');
             return 0;
         }
 
